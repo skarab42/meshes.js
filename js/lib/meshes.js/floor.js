@@ -38,6 +38,14 @@ var MeshesJS = MeshesJS || {};
         this.draw({ size: { y: value } });
     };
 
+    Floor.prototype.setColor = function(value) {
+        this.draw({ color: value });
+    };
+
+    Floor.prototype.setSize = function(value) {
+        this.draw({ size: value });
+    };
+
     Floor.prototype.draw = function(settings) {
         var s = settings || {};
         this.userData = _.defaultsDeep(settings || {}, this.userData);
