@@ -30,20 +30,20 @@ var MeshesJS = MeshesJS || {};
     Floor.prototype.constructor = Floor;
 
     // methods
+    Floor.prototype.setSize = function(value) {
+        this.draw({ size: value });
+    };
+
     Floor.prototype.setX = function(value) {
-        this.draw({ size: { x: value } });
+        this.setSize({ x: value });
     };
 
     Floor.prototype.setY = function(value) {
-        this.draw({ size: { y: value } });
+        this.setSize({ y: value });
     };
 
     Floor.prototype.setColor = function(value) {
         this.draw({ color: value });
-    };
-
-    Floor.prototype.setSize = function(value) {
-        this.draw({ size: value });
     };
 
     Floor.prototype.draw = function(settings) {

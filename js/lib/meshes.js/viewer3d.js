@@ -17,7 +17,9 @@ var MeshesJS = MeshesJS || {};
                 x: 200,
                 y: 200,
                 z: 200
-            }
+            },
+            alpha: 0.1,
+            color: 0xffaa00
         },
         floor: {
             margin: 10,
@@ -74,29 +76,35 @@ var MeshesJS = MeshesJS || {};
         self.floor = new MeshesJS.Floor(settings.floor);
         self.grid = new MeshesJS.Grid(settings.grid);
         self.axis = new MeshesJS.Axis(settings.buildVolume);
+        self.buildVolume = new MeshesJS.BuildVolume(settings.buildVolume);
 
         // compose the scene
         self.scene.add(self.ambientLight);
         self.scene.add(self.floor);
         self.scene.add(self.grid);
         self.scene.add(self.axis);
+        self.scene.add(self.buildVolume);
 
         // debugage/tests...
         self.camera.position.z = 100;
+        //self.floor.setColor(0x222222);
+        //self.floor.setX(50);
+        //self.axis.setX(50);
+        //self.grid.setX(50);
+        //self.buildVolume.setX(100);
+        //self.buildVolume.setColor(100);
+        //self.buildVolume.setAlpha(1);
 
-        self.floor.setX(50);
-        self.axis.setX(50);
-        self.grid.setX(50);
-
-        console.log(self.floor.position);
-        console.log(self.axis.position);
-        console.log(self.grid.position);
+        //console.log(self.floor.position);
+        //console.log(self.axis.position);
+        //console.log(self.grid.position);
+        //console.log(self.buildVolume.position);
 
         // render
         self.render();
     };
 
-    // set viewer size
+    // methods
     Viewer3D.prototype.setSize = function(size) {
         // default size
         var size = _.defaults(size, this.renderer.getSize());
@@ -109,12 +117,18 @@ var MeshesJS = MeshesJS || {};
         this.camera.updateProjectionMatrix();
     };
 
-    // set viewer color
+    Viewer3D.prototype.setWidth = function(width) {
+        this.setSize({ width: width });
+    };
+
+    Viewer3D.prototype.setHeight = function(height) {
+        this.setSize({ height: height });
+    };
+
     Viewer3D.prototype.setColor = function(color) {
         this.renderer.setClearColor(color);
     };
 
-    // (re)render viewer
     Viewer3D.prototype.render = function() {
         this.renderer.render(this.scene, this.camera);
     };

@@ -38,16 +38,16 @@ var MeshesJS = MeshesJS || {};
     Grid.prototype.constructor = Grid;
 
     // methods
+    Grid.prototype.setSize = function(size) {
+        this.draw({ size: size });
+    };
+
     Grid.prototype.setX = function(value) {
-        this.draw({ size: { x: value } });
+        this.setSize({ x: value });
     };
 
     Grid.prototype.setY = function(value) {
-        this.draw({ size: { y: value } });
-    };
-
-    Grid.prototype.setSize = function(size) {
-        this.draw({ size: size });
+        this.setSize({ y: value });
     };
 
     Grid.prototype.draw = function(settings) {
