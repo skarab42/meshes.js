@@ -86,7 +86,7 @@ var MeshesJS = MeshesJS || {};
         self.scene.add(self.buildVolume);
 
         // debugage/tests...
-        self.camera.position.z = 100;
+        self.camera.position.z = settings.buildVolume.size.z * 2;
         //self.floor.setColor(0x222222);
         //self.floor.setX(50);
         //self.axis.setX(50);
@@ -107,7 +107,7 @@ var MeshesJS = MeshesJS || {};
     // methods
     Viewer3D.prototype.setSize = function(size) {
         // default size
-        var size = _.defaults(size, this.renderer.getSize());
+        this.settings.size = _.defaults(size, this.renderer.getSize());
 
         // resize the renderer
         this.renderer.setSize(size.width, size.height);
@@ -115,6 +115,9 @@ var MeshesJS = MeshesJS || {};
         // update camera aspect
         this.camera.aspect = size.width / size.height;
         this.camera.updateProjectionMatrix();
+
+        // update controls
+        this.controls.update();
     };
 
     Viewer3D.prototype.setWidth = function(width) {
@@ -126,6 +129,7 @@ var MeshesJS = MeshesJS || {};
     };
 
     Viewer3D.prototype.setColor = function(color) {
+        this.settings.color = color;
         this.renderer.setClearColor(color);
     };
 
