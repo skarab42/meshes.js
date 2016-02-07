@@ -19,6 +19,10 @@ var MeshesJS = MeshesJS || {};
                 z: 200
             }
         },
+        floor: {
+            margin: 10,
+            color: 0x000000
+        },
         grid: {
             smallCell: {
                 size: 10,
@@ -34,7 +38,12 @@ var MeshesJS = MeshesJS || {};
     // Constructor
     function Viewer3D(settings) {
         // local settings
-        var settings  = _.defaultsDeep(settings || {}, Viewer3D.globalSettings);
+        var settings = settings || {};
+        this.settings = _.defaultsDeep(settings || {}, Viewer3D.globalSettings);
+
+        // init defaults settings
+        settings.floor.size = settings.buildVolume.size;
+        settings.grid.size = settings.buildVolume.size;
 
         // self alias
         var self = this;
@@ -62,19 +71,26 @@ var MeshesJS = MeshesJS || {};
 
         // built in objects
         self.ambientLight = new THREE.AmbientLight(settings.ambientLight);
-        self.grid = new MeshesJS.Grid(settings.buildVolume.size, settings.grid);
-        self.axis = new MeshesJS.Axis(settings.buildVolume.size);
+        self.floor = new MeshesJS.Floor(settings.floor);
+        self.grid = new MeshesJS.Grid(settings.grid);
+        self.axis = new MeshesJS.Axis(settings.buildVolume);
 
         // compose the scene
         self.scene.add(self.ambientLight);
+        self.scene.add(self.floor);
         self.scene.add(self.grid);
         self.scene.add(self.axis);
 
-        // debugage...
-        console.log(self);
+        // debugage/tests...
         self.camera.position.z = 100;
+
+        self.floor.setX(50);
         self.axis.setX(50);
         self.grid.setX(50);
+
+        console.log(self.floor.position);
+        console.log(self.axis.position);
+        console.log(self.grid.position);
 
         // render
         self.render();
