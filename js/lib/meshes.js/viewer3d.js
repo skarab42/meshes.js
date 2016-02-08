@@ -118,7 +118,8 @@ var MeshesJS = MeshesJS || {};
     // methods
     Viewer3D.prototype.setSize = function(size) {
         // default size
-        this.currentSize = _.defaults(size, this.settings.size);
+        var size = size !== undefined ? size : this.settings.size;
+        this.currentSize = _.defaults(size, this.currentSize);
 
         // resize the renderer
         this.renderer.setSize(this.currentSize.width, this.currentSize.height);
