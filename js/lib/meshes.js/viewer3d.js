@@ -18,7 +18,7 @@ var MeshesJS = MeshesJS || {};
                 y: 200,
                 z: 200
             },
-            alpha: 0.1,
+            opacity: 0.1,
             color: 0xffaa00
         },
         floor: {
@@ -41,7 +41,7 @@ var MeshesJS = MeshesJS || {};
     function Viewer3D(settings) {
         // local settings
         var settings = settings || {};
-        this.settings = _.defaultsDeep(settings || {}, Viewer3D.globalSettings);
+        this.settings = _.defaultsDeep(settings, Viewer3D.globalSettings);
 
         // init defaults settings
         settings.floor.size = settings.buildVolume.size;
@@ -78,6 +78,14 @@ var MeshesJS = MeshesJS || {};
         self.axis = new MeshesJS.Axis(settings.buildVolume);
         self.buildVolume = new MeshesJS.BuildVolume(settings.buildVolume);
 
+        // views controls
+        self.view = new MeshesJS.ViewControls({
+            target: self.buildVolume,
+            controls: self.controls,
+            camera: self.camera,
+            margin: self.floor.userData.margin
+        });
+
         // compose the scene
         self.scene.add(self.ambientLight);
         self.scene.add(self.floor);
@@ -86,14 +94,16 @@ var MeshesJS = MeshesJS || {};
         self.scene.add(self.buildVolume);
 
         // debugage/tests...
-        self.camera.position.z = settings.buildVolume.size.z * 2;
-        //self.floor.setColor(0x222222);
-        //self.floor.setX(50);
+        self.view.set('default');
+        self.view.set('front');
+        //self.camera.position.z = settings.buildVolume.size.z * 2;
+        //self.floor.setColor(0x555555);
+        //self.floor.setMargin(50);
         //self.axis.setX(50);
         //self.grid.setX(50);
         //self.buildVolume.setX(100);
         //self.buildVolume.setColor(100);
-        //self.buildVolume.setAlpha(1);
+        //self.buildVolume.setOpacity(1);
 
         //console.log(self.floor.position);
         //console.log(self.axis.position);
