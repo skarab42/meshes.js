@@ -141,27 +141,89 @@ var MeshesJS = MeshesJS || {};
         this.renderer.render(this.scene, this.camera);
     };
 
-    Viewer3D.prototype.getMesh = function(uuid) {
-        if (this.objects[uuid]) {
-            return this.objects[uuid];
+    Viewer3D.prototype.getObject = function(name) {
+        if (this.objects[name]) {
+            return this.objects[name];
         }
-        if (this[uuid] && (this[uuid] instanceof THREE.Object3D)) {
-            return this[uuid];
+        if (this[name] && (this[name] instanceof THREE.Object3D)) {
+            return this[name];
         }
         return null;
     };
 
-    Viewer3D.prototype.toggleMeshVisibility = function(uuid, visible) {
-        var mesh = this.getMesh(uuid);
+    Viewer3D.prototype.removeObject = function(name) {
+        if (this.objects[name]) {
+            // remove frome the scene
+            this.scene.remove(this.objects[name]);
+
+            // free memory
+            this.objects[name].geometry.dispose();
+            this.objects[name].material.dispose();
+
+            // reset/delete reference
+            this.objects[name] = null;
+            delete this.objects[name];
+
+            return true;
+        }
+        return false;
+    };
+
+    Viewer3D.prototype.addObject = function(name, object, options) {
+        // invalid object type
+        if (! (object instanceof THREE.Object3D)) {
+            throw 'Object "' + name + '" must be an instance of THREE.Object3D.';
+        }
+
+        // merge user and defaults options
+        var options = _.defaults(options || {}, {
+            position: {},
+            rotation: {},
+            replace: false
+        });
+
+        // object name already set
+        if (this.objects[name]) {
+            if (! options.replace) {
+                throw 'Object name "' + name + '" already set.';
+            }
+            // else remove old object
+            this.removeObject(name);
+        }
+
+        // set object position and rotation
+        object.position = _.assign(object.position, options.position);
+        object.rotation = _.assign(object.rotation, options.rotation);
+
+        // normalize geometry position:
+        object.geometry.center();
+        var box = object.geometry.boundingBox;
+        var size = new THREE.Vector3(
+            Math.abs(box.max.x - box.min.x),
+            Math.abs(box.max.y - box.min.y),
+            Math.abs(box.max.z - box.min.z)
+        );
+        object.geometry.translate(size.x / 2, size.y / 2, size.z / 2);
+
+        // set object up to Z
+        object.up = THREE.Vector3(0, 0, 1);
+
+        // register and add object to scene
+        this.objects[name] = object;
+        this.scene.add(object);
+    };
+
+    Viewer3D.prototype.toggleObjectVisibility = function(name, visible) {
+        var mesh = this.getObject(name);
         mesh.visible = visible !== undefined ? (!! visible) : (! mesh.visible);
     };
 
-    Viewer3D.prototype.showMesh = function(uuid) {
-        this.toggleMeshVisibility(uuid, true);
+    Viewer3D.prototype.showObject = function(name) {
+        this.toggleObjectVisibility(name, true);
     };
 
-    Viewer3D.prototype.hideMesh = function(uuid) {
-        this.toggleMeshVisibility(uuid, false);
+    Viewer3D.prototype.hideObject = function(name) {
+        this.toggleObjectVisibility(name, false);
     };
 
     // global settings
