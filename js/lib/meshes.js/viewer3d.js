@@ -5,6 +5,7 @@ var MeshesJS = MeshesJS || {};
 
     // global settings
     var globalSettings = {
+        view: 'default',
         size: {
             width: 800,
             height: 600
@@ -67,10 +68,6 @@ var MeshesJS = MeshesJS || {};
             self.render();
         });
 
-        // set default parameters
-        self.setSize(settings.size);
-        self.setColor(settings.color);
-
         // built in objects
         self.ambientLight = new THREE.AmbientLight(settings.ambientLight);
         self.floor = new MeshesJS.Floor(settings.floor);
@@ -93,9 +90,13 @@ var MeshesJS = MeshesJS || {};
         self.scene.add(self.axis);
         self.scene.add(self.buildVolume);
 
+        // set default parameters
+        self.setSize(settings.size);
+        self.setColor(settings.color);
+        self.setView(settings.view);
+
         // debugage/tests...
-        self.view.set('default');
-        self.view.set('front');
+        //self.view.set('front');
         //self.camera.position.z = settings.buildVolume.size.z * 2;
         //self.floor.setColor(0x555555);
         //self.floor.setMargin(50);
@@ -117,13 +118,13 @@ var MeshesJS = MeshesJS || {};
     // methods
     Viewer3D.prototype.setSize = function(size) {
         // default size
-        this.settings.size = _.defaults(size, this.renderer.getSize());
+        this.currentSize = _.defaults(size, this.settings.size);
 
         // resize the renderer
-        this.renderer.setSize(size.width, size.height);
+        this.renderer.setSize(this.currentSize.width, this.currentSize.height);
 
         // update camera aspect
-        this.camera.aspect = size.width / size.height;
+        this.camera.aspect = this.currentSize.width / this.currentSize.height;
         this.camera.updateProjectionMatrix();
 
         // update controls
@@ -139,8 +140,13 @@ var MeshesJS = MeshesJS || {};
     };
 
     Viewer3D.prototype.setColor = function(color) {
-        this.settings.color = color;
-        this.renderer.setClearColor(color);
+        this.currentColor = color !== undefined ? color : this.settings.color;
+        this.renderer.setClearColor(this.currentColor);
+    };
+
+    Viewer3D.prototype.setView = function(view) {
+        this.currentView = view !== undefined ? view : this.settings.view;
+        this.view.set(this.currentView);
     };
 
     Viewer3D.prototype.render = function() {
