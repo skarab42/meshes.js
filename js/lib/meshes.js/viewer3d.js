@@ -95,21 +95,8 @@ var MeshesJS = MeshesJS || {};
         self.setColor(settings.color);
         self.setView(settings.view);
 
-        // debugage/tests...
-        //self.view.set('front');
-        //self.camera.position.z = settings.buildVolume.size.z * 2;
-        //self.floor.setColor(0x555555);
-        //self.floor.setMargin(50);
-        //self.axis.setX(50);
-        //self.grid.setX(50);
-        //self.buildVolume.setX(100);
-        //self.buildVolume.setColor(100);
-        //self.buildVolume.setOpacity(1);
-
-        //console.log(self.floor.position);
-        //console.log(self.axis.position);
-        //console.log(self.grid.position);
-        //console.log(self.buildVolume.position);
+        // objects collection
+        self.objects = {};
 
         // render
         self.render();
@@ -152,6 +139,29 @@ var MeshesJS = MeshesJS || {};
 
     Viewer3D.prototype.render = function() {
         this.renderer.render(this.scene, this.camera);
+    };
+
+    Viewer3D.prototype.getMesh = function(uuid) {
+        if (this.objects[uuid]) {
+            return this.objects[uuid];
+        }
+        if (this[uuid] && (this[uuid] instanceof THREE.Object3D)) {
+            return this[uuid];
+        }
+        return null;
+    };
+
+    Viewer3D.prototype.toggleMeshVisibility = function(uuid, visible) {
+        var mesh = this.getMesh(uuid);
+        mesh.visible = visible !== undefined ? (!! visible) : (! mesh.visible);
+    };
+
+    Viewer3D.prototype.showMesh = function(uuid) {
+        this.toggleMeshVisibility(uuid, true);
+    };
+
+    Viewer3D.prototype.hideMesh = function(uuid) {
+        this.toggleMeshVisibility(uuid, false);
     };
 
     // global settings
