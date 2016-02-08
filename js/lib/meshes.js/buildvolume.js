@@ -10,20 +10,24 @@ var MeshesJS = MeshesJS || {};
             y: 100,
             z: 100
         },
-        alpha: 0.1,
+        opacity: 0.1,
         color: 0xffaa00
     };
 
     // Constructor
     function BuildVolume(settings) {
-        var geometry = new THREE.BoxGeometry();
-        var material = new THREE.MeshLambertMaterial();
+        var geometry = new THREE.BoxGeometry(1, 1, 1);
+        var material = new THREE.MeshLambertMaterial({ transparent: true });
+
+        geometry.translate(0.5, 0.5, 0.5);
 
         THREE.Mesh.call(this, geometry, material, THREE.Mesh);
 
         this.userData = _.defaultsDeep(settings || {}, BuildVolume.userData);
 
-        this.draw(settings);
+        this.setSize();
+        this.setColor();
+        this.setOpacity();
     };
 
     // extends
@@ -31,56 +35,31 @@ var MeshesJS = MeshesJS || {};
     BuildVolume.prototype.constructor = BuildVolume;
 
     // methods
-    BuildVolume.prototype.setSize = function(value) {
-        this.draw({ size: value });
+    BuildVolume.prototype.setSize = function(size) {
+        this.userData.size = _.defaultsDeep(size || {}, this.userData.size);
+        this.scale = _.assign(this.scale, this.userData.size);
     };
 
-    BuildVolume.prototype.setX = function(value) {
-        this.setSize({ x: value });
+    BuildVolume.prototype.setX = function(x) {
+        this.setSize({ x: x });
     };
 
-    BuildVolume.prototype.setY = function(value) {
-        this.setSize({ y: value });
+    BuildVolume.prototype.setY = function(y) {
+        this.setSize({ y: y });
     };
 
-    BuildVolume.prototype.setZ = function(value) {
-        this.setSize({ z: value });
+    BuildVolume.prototype.setZ = function(z) {
+        this.setSize({ z: z });
     };
 
-    BuildVolume.prototype.setAlpha = function(value) {
-        this.draw({ alpha: value });
+    BuildVolume.prototype.setColor = function(color) {
+        this.userData.color = color !== undefined ? color : this.userData.color;
+        this.material.color.setHex(this.userData.color);
     };
 
-    BuildVolume.prototype.setColor = function(value) {
-        this.draw({ color: value });
-    };
-
-    BuildVolume.prototype.draw = function(settings) {
-        var s = settings || {};
-        this.userData = _.defaultsDeep(settings || {}, this.userData);
-
-        if (s.size !== undefined) {
-            this.geometry.dispose();
-            this.geometry = new THREE.BoxGeometry(
-                this.userData.size.x,
-                this.userData.size.y,
-                this.userData.size.z
-            )
-            this.geometry.translate(
-                this.userData.size.x / 2,
-                this.userData.size.y / 2,
-                this.userData.size.z / 2
-            );
-        }
-
-        if (s.color !== undefined || s.alpha !== undefined) {
-            this.material.dispose();
-            this.material = new THREE.MeshLambertMaterial({
-                transparent: true,
-                color      : this.userData.color,
-                opacity    : this.userData.alpha
-            });
-        }
+    BuildVolume.prototype.setOpacity = function(opacity) {
+        this.userData.opacity = opacity !== undefined ? opacity : this.userData.opacity;
+        this.material.opacity = this.userData.opacity;
     };
 
     // global settings

@@ -33,12 +33,12 @@ var MeshesJS = MeshesJS || {};
 
         geometry.addAttribute('position', new THREE.BufferAttribute(vertices, 3));
         geometry.addAttribute('color', new THREE.BufferAttribute(colors, 3));
-        
+
         THREE.LineSegments.call(this, geometry, material, THREE.LineSegments);
 
         this.userData = _.defaultsDeep(settings || {}, Axis.userData);
 
-        this.draw();
+        this.setSize();
     };
 
     // extends
@@ -46,25 +46,21 @@ var MeshesJS = MeshesJS || {};
     Axis.prototype.constructor = Axis;
 
     // methods
-    Axis.prototype.setX = function(value) {
-        this.draw({ size: { x: value } });
-    };
-
-    Axis.prototype.setY = function(value) {
-        this.draw({ size: { y: value } });
-    };
-
-    Axis.prototype.setZ = function(value) {
-        this.draw({ size: { z: value } });
-    };
-
     Axis.prototype.setSize = function(size) {
-        this.draw({ size: size });
+        this.userData.size = _.defaultsDeep(size || {}, this.userData.size);
+        this.scale = _.assign(this.scale, this.userData.size);
     };
 
-    Axis.prototype.draw = function(settings) {
-        this.userData = _.defaultsDeep(settings || {}, this.userData);
-        this.scale = _.assign(this.scale, this.userData.size);
+    Axis.prototype.setX = function(x) {
+        this.setSize({ x: x });
+    };
+
+    Axis.prototype.setY = function(y) {
+        this.setSize({ y: y });
+    };
+
+    Axis.prototype.setZ = function(z) {
+        this.setSize({ z: z });
     };
 
     // global settings

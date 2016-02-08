@@ -15,14 +15,17 @@ var MeshesJS = MeshesJS || {};
 
     // Constructor
     function Floor(settings) {
-        var geometry = new THREE.PlaneBufferGeometry();
+        var geometry = new THREE.PlaneBufferGeometry(1, 1);
         var material = new THREE.MeshLambertMaterial();
+
+        geometry.translate(0.5, 0.5, 0);
 
         THREE.Mesh.call(this, geometry, material, THREE.Mesh);
 
         this.userData = _.defaultsDeep(settings || {}, Floor.userData);
 
-        this.draw(settings);
+        this.setSize();
+        this.setColor();
     };
 
     // extends
@@ -30,47 +33,31 @@ var MeshesJS = MeshesJS || {};
     Floor.prototype.constructor = Floor;
 
     // methods
-    Floor.prototype.setSize = function(value) {
-        this.draw({ size: value });
+    Floor.prototype.setSize = function(size) {
+        this.userData.size = _.defaultsDeep(size || {}, this.userData.size);
+        var margins = this.userData.margin * 2;
+        this.scale.x = this.userData.size.x + margins;
+        this.scale.y = this.userData.size.y + margins;
+        this.position.x = -this.userData.margin;
+        this.position.y = -this.userData.margin;
     };
 
-    Floor.prototype.setX = function(value) {
-        this.setSize({ x: value });
+    Floor.prototype.setMargin = function(margin) {
+        this.userData.margin = margin !== undefined ? margin : this.userData.margin;
+        this.setSize();
     };
 
-    Floor.prototype.setY = function(value) {
-        this.setSize({ y: value });
+    Floor.prototype.setX = function(x) {
+        this.setSize({ x: x });
     };
 
-    Floor.prototype.setColor = function(value) {
-        this.draw({ color: value });
+    Floor.prototype.setY = function(y) {
+        this.setSize({ y: y });
     };
 
-    Floor.prototype.draw = function(settings) {
-        var s = settings || {};
-        this.userData = _.defaultsDeep(settings || {}, this.userData);
-
-        if (s.size !== undefined || s.margin !== undefined) {
-            this.geometry.dispose();
-            var margins = this.userData.margin * 2;
-            this.userData.width = this.userData.size.x + margins;
-            this.userData.height = this.userData.size.y + margins;
-            this.geometry = new THREE.PlaneBufferGeometry(
-                this.userData.width, this.userData.height
-            );
-            this.geometry.translate(
-                (this.userData.width / 2) - this.userData.margin,
-                (this.userData.height / 2) - this.userData.margin,
-                0
-            );
-        }
-
-        if (s.color !== undefined) {
-            this.material.dispose();
-            this.material = new THREE.MeshLambertMaterial({
-                color: this.userData.color
-            });
-        }
+    Floor.prototype.setColor = function(color) {
+        this.userData.color = color !== undefined ? color : this.userData.color;
+        this.material.color.setHex(this.userData.color);
     };
 
     // global settings
