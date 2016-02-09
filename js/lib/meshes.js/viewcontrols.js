@@ -5,6 +5,7 @@ var MeshesJS = MeshesJS || {};
 
     // global settings
     var globalSettings = {
+        view: 'default',
         target: null,
         controls: null,
         camera: null,
@@ -13,21 +14,21 @@ var MeshesJS = MeshesJS || {};
 
     // Constructor
     function ViewControls(settings) {
-        var settings = _.defaultsDeep(settings || {}, ViewControls.globalSettings);
+        var settings = _.defaults(settings || {}, ViewControls.globalSettings);
 
+        this.view = null;
+        this.defaultView = settings.view;
         this.controls = settings.controls;
         this.target = settings.target;
         this.camera = settings.camera;
         this.margin = settings.margin;
-
         this.focusPoint = new THREE.Object3D();
 
-        this.computeBoundingBox();
-        this.setFocusAtCenter();
+        this.update();
     };
 
     // methods
-    ViewControls.prototype.computeBoundingBox = function() {
+    ViewControls.prototype.update = function() {
         this.target.geometry.computeBoundingBox();
         var box = this.target.geometry.boundingBox;
         this.box = {
@@ -38,9 +39,11 @@ var MeshesJS = MeshesJS || {};
             ),
             position: this.target.position
         };
+        this.setFocusAtCenter();
     };
 
     ViewControls.prototype.setFocusAt = function(point) {
+        console.log(this.focusPoint.position)
         _.assign(this.focusPoint.position, point || {});
     };
 
@@ -67,7 +70,7 @@ var MeshesJS = MeshesJS || {};
 
     ViewControls.prototype.lookAtFocusPoint = function() {
         // set camera target to center of build volume
-        this.controls.target  = this.focusPoint.position;
+        this.controls.target  = this.focusPoint.position.clone();
         this.controls.target0 = this.controls.target.clone();
 
         // update controls
@@ -85,7 +88,9 @@ var MeshesJS = MeshesJS || {};
         var w, h;
 
         var size = this.box.size;
-        var view = view || 'default';
+        var view = view || this.defaultView;
+
+        this.view = view;
 
         if (view == 'default' || view == 'front') {
             x = size.x / 2;
