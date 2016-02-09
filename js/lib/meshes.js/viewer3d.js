@@ -12,12 +12,15 @@ var MeshesJS = MeshesJS || {};
         },
         antialias: true,
         color: 0x111111,
-        ambientLight: 0x404040,
+        ambientLight: {
+            color: 0x404040,
+            visible: true
+        },
         directionalLights: {
-            1: { color: 0xefefff, opacity: 0.2, position: { x:  1, y:  1, z: 1 } },
-            2: { color: 0xefefff, opacity: 0.4, position: { x:  1, y: -1, z: 1 } },
-            3: { color: 0xefefff, opacity: 0.6, position: { x: -1, y: -1, z: 1 } },
-            4: { color: 0xefefff, opacity: 0.8, position: { x: -1, y:  1, z: 1 } }
+            1: { color: 0xefefff, opacity: 0.2, position: { x:  1, y:  1, z: 1 }, visible: true },
+            2: { color: 0xefefff, opacity: 0.4, position: { x:  1, y: -1, z: 1 }, visible: true },
+            3: { color: 0xefefff, opacity: 0.6, position: { x: -1, y: -1, z: 1 }, visible: true },
+            4: { color: 0xefefff, opacity: 0.8, position: { x: -1, y:  1, z: 1 }, visible: true }
         },
         buildVolume: {
             size: {
@@ -26,11 +29,13 @@ var MeshesJS = MeshesJS || {};
                 z: 200
             },
             opacity: 0.1,
-            color: 0xffaa00
+            color: 0xffaa00,
+            visible: true
         },
         floor: {
             margin: 10,
-            color: 0x000000
+            color: 0x000000,
+            visible: true
         },
         grid: {
             smallCell: {
@@ -40,7 +45,11 @@ var MeshesJS = MeshesJS || {};
             bigCell: {
                 size: 100,
                 color: 0x444444
-            }
+            },
+            visible: true
+        },
+        axis: {
+            visible: true
         }
     };
 
@@ -78,7 +87,7 @@ var MeshesJS = MeshesJS || {};
         });
 
         // built in objects
-        self.ambientLight = new THREE.AmbientLight(self.defaults.ambientLight);
+        self.ambientLight = new THREE.AmbientLight(self.defaults.ambientLight.color);
         self.floor = new MeshesJS.Floor(self.defaults.floor);
         self.grid = new MeshesJS.Grid(self.defaults.grid);
         self.axis = new MeshesJS.Axis(self.defaults.buildVolume);
@@ -97,15 +106,12 @@ var MeshesJS = MeshesJS || {};
         self.scene.add(self.ambientLight);
 
         for(var num in self.defaults.directionalLights) {
-            self.directionalLights[num] = new THREE.DirectionalLight(
-                self.defaults.directionalLights[num].color,
-                self.defaults.directionalLights[num].opacity
-            );
-            _.assign(
-                self.directionalLights[num].position,
-                self.defaults.directionalLights[num].position
-            );
-            self.scene.add(self.directionalLights[num]);
+            var d = self.defaults.directionalLights[num];
+            var o = new THREE.DirectionalLight(d.color, d.opacity);
+            _.assign(o.position, d.position);
+            self.scene.add(o);
+            o.visible = !! d.visible;
+            self.directionalLights[num] = o;
         }
 
         // compose the scene
@@ -113,6 +119,12 @@ var MeshesJS = MeshesJS || {};
         self.scene.add(self.grid);
         self.scene.add(self.axis);
         self.scene.add(self.buildVolume);
+
+        // set visibility
+        self.floor.visible = !! self.defaults.floor.visible;
+        self.grid.visible = !! self.defaults.grid.visible;
+        self.axis.visible = !! self.defaults.axis.visible;
+        self.buildVolume.visible = !! self.defaults.buildVolume.visible;
 
         // set default parameters
         self.setSize(self.defaults.size);
