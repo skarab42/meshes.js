@@ -108,10 +108,11 @@ var MeshesJS = MeshesJS || {};
         for(var num in self.defaults.directionalLights) {
             var d = self.defaults.directionalLights[num];
             var o = new THREE.DirectionalLight(d.color, d.opacity);
+            var n = 'directionalLight' + num;
             _.assign(o.position, d.position);
-            self.scene.add(o);
             o.visible = !! d.visible;
-            self.directionalLights[num] = o;
+            self.scene.add(o);
+            self[n] = o;
         }
 
         // compose the scene
