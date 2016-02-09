@@ -13,6 +13,12 @@ var MeshesJS = MeshesJS || {};
         antialias: true,
         color: 0x111111,
         ambientLight: 0x404040,
+        directionalLights: {
+            1: { color: 0xefefff, opacity: 0.2, position: { x:  1, y:  1, z: 1 } },
+            2: { color: 0xefefff, opacity: 0.4, position: { x:  1, y: -1, z: 1 } },
+            3: { color: 0xefefff, opacity: 0.6, position: { x: -1, y: -1, z: 1 } },
+            4: { color: 0xefefff, opacity: 0.8, position: { x: -1, y:  1, z: 1 } }
+        },
         buildVolume: {
             size: {
                 x: 200,
@@ -40,24 +46,24 @@ var MeshesJS = MeshesJS || {};
 
     // Constructor
     function Viewer3D(settings) {
-        // local settings
-        var settings = settings || {};
-        this.defaults = _.defaultsDeep({}, settings, Viewer3D.globalSettings);
-
-        // init defaults settings
-        this.defaults.floor.size = this.defaults.buildVolume.size;
-        this.defaults.grid.size = this.defaults.buildVolume.size;
-
-        // clone settings from defaults
-        this.settings = _.defaults({}, this.defaults);
-
         // self alias
         var self = this;
+
+        // local settings
+        var settings = settings || {};
+        self.defaults = _.defaultsDeep({}, settings, Viewer3D.globalSettings);
+
+        // init defaults settings
+        self.defaults.floor.size = self.defaults.buildVolume.size;
+        self.defaults.grid.size = self.defaults.buildVolume.size;
+
+        // clone settings from defaults
+        self.settings = _.defaults({}, self.defaults);
 
         // create main objects
         self.scene = new THREE.Scene();
         self.camera = new THREE.PerspectiveCamera();
-        self.renderer = new THREE.WebGLRenderer({ antialias: this.defaults.antialias });
+        self.renderer = new THREE.WebGLRenderer({ antialias: self.defaults.antialias });
         self.canvas = self.renderer.domElement;
 
         // set camera orbit around Z axis
@@ -72,11 +78,11 @@ var MeshesJS = MeshesJS || {};
         });
 
         // built in objects
-        self.ambientLight = new THREE.AmbientLight(this.defaults.ambientLight);
-        self.floor = new MeshesJS.Floor(this.defaults.floor);
-        self.grid = new MeshesJS.Grid(this.defaults.grid);
-        self.axis = new MeshesJS.Axis(this.defaults.buildVolume);
-        self.buildVolume = new MeshesJS.BuildVolume(this.defaults.buildVolume);
+        self.ambientLight = new THREE.AmbientLight(self.defaults.ambientLight);
+        self.floor = new MeshesJS.Floor(self.defaults.floor);
+        self.grid = new MeshesJS.Grid(self.defaults.grid);
+        self.axis = new MeshesJS.Axis(self.defaults.buildVolume);
+        self.buildVolume = new MeshesJS.BuildVolume(self.defaults.buildVolume);
 
         // views controls
         self.view = new MeshesJS.ViewControls({
@@ -86,17 +92,32 @@ var MeshesJS = MeshesJS || {};
             margin: self.floor.userData.margin
         });
 
-        // compose the scene
+        // lightning
+        self.directionalLights = {};
         self.scene.add(self.ambientLight);
+
+        for(var num in self.defaults.directionalLights) {
+            self.directionalLights[num] = new THREE.DirectionalLight(
+                self.defaults.directionalLights[num].color,
+                self.defaults.directionalLights[num].opacity
+            );
+            _.assign(
+                self.directionalLights[num].position,
+                self.defaults.directionalLights[num].position
+            );
+            self.scene.add(self.directionalLights[num]);
+        }
+
+        // compose the scene
         self.scene.add(self.floor);
         self.scene.add(self.grid);
         self.scene.add(self.axis);
         self.scene.add(self.buildVolume);
 
         // set default parameters
-        self.setSize(this.defaults.size);
-        self.setColor(this.defaults.color);
-        self.setView(this.defaults.view);
+        self.setSize(self.defaults.size);
+        self.setColor(self.defaults.color);
+        self.setView(self.defaults.view);
 
         // objects collection
         self.objects = {};
