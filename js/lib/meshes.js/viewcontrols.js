@@ -43,7 +43,6 @@ var MeshesJS = MeshesJS || {};
     };
 
     ViewControls.prototype.setFocusAt = function(point) {
-        console.log(this.focusPoint.position)
         _.assign(this.focusPoint.position, point || {});
     };
 
