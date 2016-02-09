@@ -42,11 +42,14 @@ var MeshesJS = MeshesJS || {};
     function Viewer3D(settings) {
         // local settings
         var settings = settings || {};
-        this.settings = _.defaultsDeep(settings, Viewer3D.globalSettings);
+        this.defaults = _.defaultsDeep({}, settings, Viewer3D.globalSettings);
 
         // init defaults settings
-        settings.floor.size = settings.buildVolume.size;
-        settings.grid.size = settings.buildVolume.size;
+        this.defaults.floor.size = this.defaults.buildVolume.size;
+        this.defaults.grid.size = this.defaults.buildVolume.size;
+
+        // clone settings from defaults
+        this.settings = _.defaults({}, this.defaults);
 
         // self alias
         var self = this;
@@ -54,7 +57,7 @@ var MeshesJS = MeshesJS || {};
         // create main objects
         self.scene = new THREE.Scene();
         self.camera = new THREE.PerspectiveCamera();
-        self.renderer = new THREE.WebGLRenderer({ antialias: settings.antialias });
+        self.renderer = new THREE.WebGLRenderer({ antialias: this.defaults.antialias });
         self.canvas = self.renderer.domElement;
 
         // set camera orbit around Z axis
@@ -69,11 +72,11 @@ var MeshesJS = MeshesJS || {};
         });
 
         // built in objects
-        self.ambientLight = new THREE.AmbientLight(settings.ambientLight);
-        self.floor = new MeshesJS.Floor(settings.floor);
-        self.grid = new MeshesJS.Grid(settings.grid);
-        self.axis = new MeshesJS.Axis(settings.buildVolume);
-        self.buildVolume = new MeshesJS.BuildVolume(settings.buildVolume);
+        self.ambientLight = new THREE.AmbientLight(this.defaults.ambientLight);
+        self.floor = new MeshesJS.Floor(this.defaults.floor);
+        self.grid = new MeshesJS.Grid(this.defaults.grid);
+        self.axis = new MeshesJS.Axis(this.defaults.buildVolume);
+        self.buildVolume = new MeshesJS.BuildVolume(this.defaults.buildVolume);
 
         // views controls
         self.view = new MeshesJS.ViewControls({
@@ -91,9 +94,9 @@ var MeshesJS = MeshesJS || {};
         self.scene.add(self.buildVolume);
 
         // set default parameters
-        self.setSize(settings.size);
-        self.setColor(settings.color);
-        self.setView(settings.view);
+        self.setSize(this.defaults.size);
+        self.setColor(this.defaults.color);
+        self.setView(this.defaults.view);
 
         // objects collection
         self.objects = {};
@@ -105,14 +108,14 @@ var MeshesJS = MeshesJS || {};
     // methods
     Viewer3D.prototype.setSize = function(size) {
         // default size
-        var size = size !== undefined ? size : this.settings.size;
-        this.currentSize = _.defaults(size, this.currentSize);
+        var size = size !== undefined ? size : this.defaults.size;
+        this.settings.size = _.defaults(size, this.settings.size);
 
         // resize the renderer
-        this.renderer.setSize(this.currentSize.width, this.currentSize.height);
+        this.renderer.setSize(this.settings.size.width, this.settings.size.height);
 
         // update camera aspect
-        this.camera.aspect = this.currentSize.width / this.currentSize.height;
+        this.camera.aspect = this.settings.size.width / this.settings.size.height;
         this.camera.updateProjectionMatrix();
 
         // update controls
@@ -128,13 +131,23 @@ var MeshesJS = MeshesJS || {};
     };
 
     Viewer3D.prototype.setColor = function(color) {
-        this.currentColor = color !== undefined ? color : this.settings.color;
-        this.renderer.setClearColor(this.currentColor);
+        this.settings.color = color !== undefined ? color : this.defaults.color;
+        this.renderer.setClearColor(this.settings.color);
     };
 
     Viewer3D.prototype.setView = function(view) {
-        this.currentView = view !== undefined ? view : this.settings.view;
-        this.view.set(this.currentView);
+        this.settings.view = view !== undefined ? view : this.defaults.view;
+        this.view.set(this.settings.view);
+    };
+
+    Viewer3D.prototype.setBuildVolume = function(size) {
+        this.settings.buildVolume.size = size !== undefined ? size : this.defaults.buildVolume.size;
+        this.floor.setSize(this.settings.buildVolume.size);
+        this.grid.setSize(this.settings.buildVolume.size);
+        this.axis.setSize(this.settings.buildVolume.size);
+        this.buildVolume.setSize(this.settings.buildVolume.size);
+        this.view.update();
+        this.setView(this.settings.view);
     };
 
     Viewer3D.prototype.render = function() {
@@ -195,7 +208,7 @@ var MeshesJS = MeshesJS || {};
         object.position = _.assign(object.position, options.position);
         object.rotation = _.assign(object.rotation, options.rotation);
 
-        // normalize geometry position:
+        // normalize geometry position
         object.geometry.center();
         var box = object.geometry.boundingBox;
         var size = new THREE.Vector3(
