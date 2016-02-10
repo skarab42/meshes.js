@@ -13,11 +13,17 @@ var fileInput  = $fileInput.get(0);
 // on file selected
 $fileInput.change(function(event) {
     for (var i = 0; i < fileInput.files.length; i++) {
-        loadFile(fileInput.files[i]);
+        loadFile(fileInput.files[i], function(geometry) {
+            var mesh = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({
+                color: 0xff0000
+            }));
+            viewer3d.addObject(mesh.uuid, mesh);
+            viewer3d.render();
+        });
     }
 });
 
-
+/*
 function loadFile(file) {
     // empty file...
     if (file.size == 0) {
@@ -36,6 +42,9 @@ function loadFile(file) {
 
         // STL parser
         var parser = new Worker('js/lib/meshes.js/workers/stl.js');
+
+        // benchmark
+        var startTime = Date.now();
 
         // start parsing
         parser.postMessage(this.result, [ this.result ]);
@@ -58,14 +67,21 @@ function loadFile(file) {
             viewer3d.addObject(mesh.uuid, mesh);
             viewer3d.render();
 
-            console.log('loaded', file.name, mesh);
+            console.log('loaded', file.name, mesh);var suffix = 'ms';
+
+            var time = Date.now() - startTime;
+            if (time > 1000) {
+                suffix = 's';
+                time /= 1000;
+            }
+            console.log('-> ' + time + suffix);
         };
     };
 
     // start reading file as array buffer
     reader.readAsArrayBuffer(file);
 }
-
+*/
 
 
 
