@@ -50,6 +50,14 @@ var MeshesJS = MeshesJS || {};
         },
         axis: {
             visible: true
+        },
+        materials: {
+            default: {
+                material: THREE.MeshLambertMaterial,
+                settings: {
+                    color: 'random'
+                }
+            }
         }
     };
 
@@ -220,6 +228,21 @@ var MeshesJS = MeshesJS || {};
         return false;
     };
 
+    Viewer3D.prototype.getUniqueName = function(name) {
+        while (this.objects[name]) {
+            var pattern = /\(([0-9]+)\)$/;
+            var matches = name.match(pattern);
+            if (matches && matches[1]) {
+                var id = parseInt(matches[1]);
+                name = name.replace(pattern, '(' + (id + 1) + ')');
+            }
+            else {
+                name += ' (1)';
+            }
+        }
+        return name;
+    };
+
     Viewer3D.prototype.addObject = function(name, object, options) {
         // invalid object type
         if (! (object instanceof THREE.Object3D)) {
@@ -230,17 +253,25 @@ var MeshesJS = MeshesJS || {};
         var options = _.defaults(options || {}, {
             position: {},
             rotation: {},
-            replace: false
+            replace: false,
+            unique: false
         });
 
         // object name already set
         if (this.objects[name]) {
-            if (! options.replace) {
+            if (options.replace) {
+                this.removeObject(name);
+            }
+            else if (options.unique) {
                 throw 'Object name "' + name + '" already set.';
             }
-            // else remove old object
-            this.removeObject(name);
+            else {
+                name = this.getUniqueName(name);
+            }
         }
+
+        // force object name
+        object.name = name;
 
         // set object position and rotation
         object.position = _.assign(object.position, options.position);
@@ -262,6 +293,9 @@ var MeshesJS = MeshesJS || {};
         // register and add object to scene
         this.objects[name] = object;
         this.scene.add(object);
+
+        // since the name can change
+        return name;
     };
 
     Viewer3D.prototype.toggleObjectVisibility = function(name, visible) {
@@ -279,11 +313,26 @@ var MeshesJS = MeshesJS || {};
 
     // -------------------------------------------------------------------------
 
+    Viewer3D.prototype.getMaterial = function(name) {
+        var selected = this.settings.materials[name || 'default'];
+        var settings = _.defaults({}, selected.settings);
+        if (settings.color == 'random') {
+            if (typeof randomColor == 'function') {
+                settings.color = randomColor();
+            }
+            else {
+                settings.color = ((1<<24)*Math.random()|0);
+            }
+        }
+        return new selected.material(settings);
+    };
+
     Viewer3D.prototype.load = function(input, options) {
         var settings = _.defaults({}, options || {}, {
             onLoaded: function(mesh) {},
             onError: function(error) {},
-            name: null
+            name: null,
+            materialName: 'default'
         });
         if (input instanceof THREE.Object3D) {
             var name = settings.name || (input.name.length ? input.name : ('mesh' + mesh.id));
@@ -293,12 +342,10 @@ var MeshesJS = MeshesJS || {};
             var self = this;
             self.loader.load(input, {
                 onGeometry: function(geometry) {
-                    var material = new THREE.MeshLambertMaterial({
-                        color: 0xff0000
-                    });
+                    var material = self.getMaterial(settings.materialName);
                     var mesh = new THREE.Mesh(geometry, material);
-                    mesh.name = options.name || ('mesh' + mesh.id);
-                    self.addObject(mesh.name, mesh);
+                    var name = options.name || ('mesh' + mesh.id);
+                    self.addObject(name, mesh);
                     settings.onLoaded(mesh);
                 },
                 onError: function(error) {
