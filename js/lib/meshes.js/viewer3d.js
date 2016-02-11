@@ -99,6 +99,7 @@ var MeshesJS = MeshesJS || {};
 
         self.controls.addEventListener('change', function() {
             self.controlsChange = true;
+            self.transform.update();
             self.render();
         });
 
@@ -107,18 +108,30 @@ var MeshesJS = MeshesJS || {};
         });
 
         // transform controls
+        var transformTimer = null;
+        var transformChangeTime = null;
+        self.transformChange = false;
         self.transform = new THREE.TransformControls(self.camera, self.canvas);
         self.transform.addEventListener('change', function() {
-            self.controlsChange = true;
+            transformChangeTime = Date.now();
+            self.transformChange = true;
             self.render();
             // fake end events
-            setTimeout(function() { self.controlsChange = false; }, 100);
+            if (! transformTimer) {
+                transformTimer = setInterval(function() {
+                    if (Date.now() - transformChangeTime > 500) {
+                        self.transformChange = false;
+                        clearInterval(transformTimer);
+                        transformTimer = null;
+                    }
+                }, 100);
+            }
         });
 
         self.currentObject = null;
 
         window.addEventListener('keydown', function(event) {
-            console.log(event.keyCode);
+            //console.log(event.keyCode);
             switch (event.keyCode) {
                 case 69: // e = transformation mode
                     if (! self.currentObject) break;
@@ -131,6 +144,7 @@ var MeshesJS = MeshesJS || {};
                     }
                     self.render();
                     break;
+
                 case 65: // a = (un)select all
                     if (Object.keys(self.selectedObjects).length > 0) {
                         self.unselectAllObjects();
@@ -139,7 +153,35 @@ var MeshesJS = MeshesJS || {};
                     }
                     self.render();
                     break;
+
+                case 84: // t = translate
+                    self.transform.setMode('translate');
+                    break;
+
+                case 82: // r = rotate
+                    self.transform.setMode('rotate');
+                    break;
+
+                case 83: // s = scale
+                    self.transform.setMode('scale');
+                    break;
+
+                case 17: // Ctrl = snap to grid
+                    self.transform.setTranslationSnap(self.settings.grid.smallCell.size);
+                    self.transform.setRotationSnap(THREE.Math.degToRad(10));
+                    break;
             }
+            self.render();
+        });
+
+        window.addEventListener('keyup', function(event) {
+            switch (event.keyCode) {
+                case 17: // Ctrl = reset snap to grid
+                    self.transform.setTranslationSnap(null);
+                    self.transform.setRotationSnap(null);
+                    break;
+            }
+            self.render();
         });
 
         // dom events (mouse)
@@ -327,18 +369,22 @@ var MeshesJS = MeshesJS || {};
                 this.currentObject.userData.transform = false;
             }
             this.currentObject = object;
-            this.selectedObjects[object.uuid] = object;
+            this.selectedObjects[object.name] = object;
             object.material.color.setHex(this.settings.colors.current);
             object.userData.transform = true;
             this.transform.attach(object);
         }
         else {
             this.currentObject = null;
-            this.selectedObjects[object.uuid] = null;
-            delete this.selectedObjects[object.uuid];
+            this.selectedObjects[object.name] = null;
+            delete this.selectedObjects[object.name];
             object.material.color.setHex(object.userData.color);
             object.userData.transform = false;
             this.transform.detach();
+            var names = Object.keys(this.selectedObjects);
+            if (names.length) {
+                this.setObjectSelected(names.pop());
+            }
         }
 
         object.userData.selected = !! selected;
@@ -417,7 +463,7 @@ var MeshesJS = MeshesJS || {};
         // events listeners
         var self = this;
         self.events.addEventListener(object, 'mouseup', function(event) {
-            if (! self.controlsChange) {
+            if (! self.transformChange) {
                 if (object.userData.selected && ! object.userData.transform) {
                     object.userData.selected = false;
                 }
