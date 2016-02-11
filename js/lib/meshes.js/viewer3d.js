@@ -258,7 +258,8 @@ var MeshesJS = MeshesJS || {};
             position: {},
             rotation: {},
             replace: false,
-            unique: false
+            unique: false,
+            render: true
         });
 
         // object name already set
@@ -298,8 +299,8 @@ var MeshesJS = MeshesJS || {};
         this.objects[name] = object;
         this.scene.add(object);
 
-        // since the name can change
-        return name;
+        // auto render ?
+        options.render && this.render();
     };
 
     Viewer3D.prototype.toggleObjectVisibility = function(name, visible) {
@@ -340,8 +341,11 @@ var MeshesJS = MeshesJS || {};
             name: null,
             materialName: 'default'
         });
+        var name = settings.name;
+        if (! name) {
+             name = (input.name && input.name.length) ? input.name : 'mesh';
+        }
         if (input instanceof THREE.Object3D) {
-            var name = settings.name || (input.name.length ? input.name : 'mesh');
             try{
                 this.addObject(name, input, options);
                 settings.onLoaded(input);
@@ -356,7 +360,6 @@ var MeshesJS = MeshesJS || {};
                 onGeometry: function(geometry) {
                     var material = self.getMaterial(settings.materialName);
                     var mesh = new THREE.Mesh(geometry, material);
-                    var name = settings.name || 'mesh';
                     self.addObject(name, mesh);
                     settings.onLoaded(mesh);
                 },

@@ -15,10 +15,8 @@ $fileInput.change(function() {
     for (var i = 0; i < fileInput.files.length; i++) {
         var file = fileInput.files[i];
         viewer3d.load(file, {
-            name: file.name,
             onLoaded: function(mesh) {
                 console.info(['loaded', mesh.name]);
-                viewer3d.render();
             },
             onError: function(error) {
                 console.error([file.name, error.message]);
