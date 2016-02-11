@@ -59,8 +59,7 @@ var MeshesJS = MeshesJS || {};
         var self = this;
 
         // local settings
-        var settings = settings || {};
-        self.defaults = _.defaultsDeep({}, settings, Viewer3D.globalSettings);
+        self.defaults = _.defaultsDeep({}, settings || {}, Viewer3D.globalSettings);
 
         // init defaults settings
         self.defaults.floor.size = self.defaults.buildVolume.size;
@@ -132,12 +131,15 @@ var MeshesJS = MeshesJS || {};
         self.setColor(self.defaults.color);
         self.setView(self.defaults.view);
 
+        // Loader
+        self.loader = new MeshesJS.Loader();
+
         // objects collection
         self.objects = {};
 
         // render
         self.render();
-    };
+    }
 
     // methods
     Viewer3D.prototype.setSize = function(size) {
@@ -187,6 +189,8 @@ var MeshesJS = MeshesJS || {};
     Viewer3D.prototype.render = function() {
         this.renderer.render(this.scene, this.camera);
     };
+
+    // -------------------------------------------------------------------------
 
     Viewer3D.prototype.getObject = function(name) {
         if (this.objects[name]) {
@@ -272,6 +276,39 @@ var MeshesJS = MeshesJS || {};
     Viewer3D.prototype.hideObject = function(name) {
         this.toggleObjectVisibility(name, false);
     };
+
+    // -------------------------------------------------------------------------
+
+    Viewer3D.prototype.load = function(input, options) {
+        var settings = _.defaults({}, options || {}, {
+            onLoaded: function(mesh) {},
+            onError: function(error) {},
+            name: null
+        });
+        if (input instanceof THREE.Object3D) {
+            var name = settings.name || (input.name.length ? input.name : ('mesh' + mesh.id));
+            this.addObject(name, input, options);
+        }
+        else {
+            var self = this;
+            self.loader.load(input, {
+                onGeometry: function(geometry) {
+                    var material = new THREE.MeshLambertMaterial({
+                        color: 0xff0000
+                    });
+                    var mesh = new THREE.Mesh(geometry, material);
+                    mesh.name = options.name || ('mesh' + mesh.id);
+                    self.addObject(mesh.name, mesh);
+                    settings.onLoaded(mesh);
+                },
+                onError: function(error) {
+                    settings.onError(error);
+                }
+            });
+        }
+    };
+
+    // -------------------------------------------------------------------------
 
     // global settings
     Viewer3D.globalSettings = globalSettings;
