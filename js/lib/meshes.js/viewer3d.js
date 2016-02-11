@@ -61,6 +61,8 @@ var MeshesJS = MeshesJS || {};
         }
     };
 
+    // -------------------------------------------------------------------------
+
     // Constructor
     function Viewer3D(settings) {
         // self alias
@@ -148,6 +150,8 @@ var MeshesJS = MeshesJS || {};
         // render
         self.render();
     }
+
+    // -------------------------------------------------------------------------
 
     // methods
     Viewer3D.prototype.setSize = function(size) {
@@ -327,6 +331,8 @@ var MeshesJS = MeshesJS || {};
         return new selected.material(settings);
     };
 
+    // -------------------------------------------------------------------------
+
     Viewer3D.prototype.load = function(input, options) {
         var settings = _.defaults({}, options || {}, {
             onLoaded: function(mesh) {},
@@ -335,8 +341,14 @@ var MeshesJS = MeshesJS || {};
             materialName: 'default'
         });
         if (input instanceof THREE.Object3D) {
-            var name = settings.name || (input.name.length ? input.name : ('mesh' + mesh.id));
-            this.addObject(name, input, options);
+            var name = settings.name || (input.name.length ? input.name : 'mesh');
+            try{
+                this.addObject(name, input, options);
+                settings.onLoaded(input);
+            }
+            catch(error) {
+                settings.onError(error);
+            }
         }
         else {
             var self = this;
@@ -344,7 +356,7 @@ var MeshesJS = MeshesJS || {};
                 onGeometry: function(geometry) {
                     var material = self.getMaterial(settings.materialName);
                     var mesh = new THREE.Mesh(geometry, material);
-                    var name = options.name || ('mesh' + mesh.id);
+                    var name = settings.name || 'mesh';
                     self.addObject(name, mesh);
                     settings.onLoaded(mesh);
                 },

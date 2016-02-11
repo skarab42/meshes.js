@@ -25,4 +25,5 @@ $fileInput.change(function() {
             }
         });
     }
+    $fileInput.val('');
 });
