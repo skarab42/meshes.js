@@ -108,7 +108,29 @@ var MeshesJS = MeshesJS || {};
         // transform controls
         self.transform = new THREE.TransformControls(self.camera, self.canvas);
         self.transform.addEventListener('change', function() {
+            self.controlsChange = true;
             self.render();
+            // fake end events
+            setTimeout(function() { self.controlsChange = false; }, 100);
+        });
+
+        self.selectedObject = null;
+
+        window.addEventListener('keydown', function(event) {
+            //console.log(event.keyCode);
+            switch (event.keyCode) {
+                case 69: // e = edit mode
+                    if (! self.selectedObject) break;
+                    if (self.selectedObject.userData.transform) {
+                        self.selectedObject.userData.transform = false;
+                        self.transform.detach();
+                    } else {
+                        self.selectedObject.userData.transform = true;
+                        self.transform.attach(self.selectedObject);
+                    }
+                    self.render();
+                    break;
+            }
         });
 
         // dom events (mouse)
@@ -148,6 +170,7 @@ var MeshesJS = MeshesJS || {};
         self.scene.add(self.grid);
         self.scene.add(self.axis);
         self.scene.add(self.buildVolume);
+        self.scene.add(self.transform);
 
         // set visibility
         self.floor.visible = !! self.defaults.floor.visible;
@@ -253,6 +276,7 @@ var MeshesJS = MeshesJS || {};
 
             // remove events listeners
             this.events.removeEventListener(this.objects[name], 'mouseup', true);
+            this.events.removeEventListener(this.objects[name], 'dblclick', true);
 
             // reset/delete reference
             this.objects[name] = null;
@@ -290,10 +314,12 @@ var MeshesJS = MeshesJS || {};
         }
 
         if (selected) {
+            this.selectedObject = object;
             this.selectedObjects[object.uuid] = object;
             object.material.color.setHex(this.settings.colors.selected);
         }
         else {
+            this.selectedObject = null;
             this.selectedObjects[object.uuid] = null;
             delete this.selectedObjects[object.uuid];
             object.material.color.setHex(object.userData.color);
@@ -365,9 +391,26 @@ var MeshesJS = MeshesJS || {};
         self.events.addEventListener(object, 'mouseup', function(event) {
             if (! self.controlsChange) {
                 self.setObjectSelected(object, ! object.userData.selected);
+                if (object.userData.transform && ! object.userData.selected) {
+                    object.userData.transform = false;
+                    self.transform.detach();
+                }
                 self.render();
             }
         }, false);
+
+        /*self.events.addEventListener(object, 'dblclick', function(event) {
+            if (object.userData.transform) {
+                self.transform.detach();
+                object.userData.transform = false;
+                self.setObjectSelected(object, false);
+            } else {
+                self.transform.attach(object);
+                object.userData.transform = true;
+                self.setObjectSelected(object, true);
+            }
+            self.render();
+        }, false);*/
 
         // register and add object to scene
         this.objects[name] = object;
