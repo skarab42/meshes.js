@@ -58,6 +58,9 @@ var MeshesJS = MeshesJS || {};
                     color: 'random'
                 }
             }
+        },
+        colors: {
+            selected: 0xff0000
         }
     };
 
@@ -94,6 +97,14 @@ var MeshesJS = MeshesJS || {};
         self.controls.addEventListener('change', function() {
             self.render();
         });
+
+        self.transform = new THREE.TransformControls(self.camera, self.canvas);
+        self.transform.addEventListener('change', function() {
+            self.render();
+        });
+
+        // dom events (mouse)
+        self.events = new THREEx.DomEvents(self.camera, self.canvas);
 
         // built in objects
         self.ambientLight = new THREE.AmbientLight(self.defaults.ambientLight.color);
@@ -145,11 +156,19 @@ var MeshesJS = MeshesJS || {};
         self.loader = new MeshesJS.Loader();
 
         // objects collection
+        self.selectedObjects = {};
         self.objects = {};
 
         // render
         self.render();
     }
+
+    // -------------------------------------------------------------------------
+
+    // public events
+    Viewer3D.prototype.onObjectAdded = function(object) {};
+    Viewer3D.prototype.onObjectRemoved = function(name) {};
+    Viewer3D.prototype.onObjectSelected = function(object, selected) {};
 
     // -------------------------------------------------------------------------
 
@@ -223,9 +242,15 @@ var MeshesJS = MeshesJS || {};
             this.objects[name].geometry.dispose();
             this.objects[name].material.dispose();
 
+            // remove events listeners
+            this.events.removeEventListener(this.objects[name], 'click', true);
+
             // reset/delete reference
             this.objects[name] = null;
             delete this.objects[name];
+
+            // public callback
+            this.onObjectRemoved(name);
 
             return true;
         }
@@ -245,6 +270,31 @@ var MeshesJS = MeshesJS || {};
             }
         }
         return name;
+    };
+
+    Viewer3D.prototype.setObjectSelected = function(object, selected) {
+        var selected = selected === undefined ? true : selected;
+        var object = object.uuid ? object : this.getObject(object);
+
+        if (! object) {
+            throw 'Undefined object';
+        }
+
+        if (selected) {
+            this.selectedObjects[object.uuid] = object;
+            object.material.color.setHex(this.settings.colors.selected);
+        }
+        else {
+            this.selectedObjects[object.uuid] = null;
+            delete this.selectedObjects[object.uuid];
+            object.material.color.setHex(object.userData.color);
+        }
+
+        object.userData.selected = !! selected;
+        object.renderOrder = this.zIndex++; // force on top
+
+        // public event
+        this.onObjectSelected(object, selected);
     };
 
     Viewer3D.prototype.addObject = function(name, object, options) {
@@ -295,12 +345,28 @@ var MeshesJS = MeshesJS || {};
         // set object up to Z
         object.up = THREE.Vector3(0, 0, 1);
 
+        // set object unselected by default
+        object.userData.selected = false;
+
+        // backup original color
+        object.userData.color = object.material.color.getHex();
+
+        // events listeners
+        var self = this;
+        self.events.addEventListener(object, 'click', function(event) {
+            self.setObjectSelected(object, ! object.userData.selected);
+            self.render();
+        }, false);
+
         // register and add object to scene
         this.objects[name] = object;
         this.scene.add(object);
 
         // auto render ?
         options.render && this.render();
+
+        // public callback
+        this.onObjectAdded(object);
     };
 
     Viewer3D.prototype.toggleObjectVisibility = function(name, visible) {
