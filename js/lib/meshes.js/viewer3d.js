@@ -60,7 +60,8 @@ var MeshesJS = MeshesJS || {};
             }
         },
         colors: {
-            selected: 0xff0000
+            selected: 0xff0000,
+            current: 0x00ff00
         }
     };
 
@@ -114,19 +115,27 @@ var MeshesJS = MeshesJS || {};
             setTimeout(function() { self.controlsChange = false; }, 100);
         });
 
-        self.selectedObject = null;
+        self.currentObject = null;
 
         window.addEventListener('keydown', function(event) {
-            //console.log(event.keyCode);
+            console.log(event.keyCode);
             switch (event.keyCode) {
-                case 69: // e = edit mode
-                    if (! self.selectedObject) break;
-                    if (self.selectedObject.userData.transform) {
-                        self.selectedObject.userData.transform = false;
+                case 69: // e = transformation mode
+                    if (! self.currentObject) break;
+                    if (self.currentObject.userData.transform) {
+                        self.currentObject.userData.transform = false;
                         self.transform.detach();
                     } else {
-                        self.selectedObject.userData.transform = true;
-                        self.transform.attach(self.selectedObject);
+                        self.currentObject.userData.transform = true;
+                        self.transform.attach(self.currentObject);
+                    }
+                    self.render();
+                    break;
+                case 65: // a = (un)select all
+                    if (Object.keys(self.selectedObjects).length > 0) {
+                        self.unselectAllObjects();
+                    } else {
+                        self.selectAllObjects();
                     }
                     self.render();
                     break;
@@ -314,15 +323,22 @@ var MeshesJS = MeshesJS || {};
         }
 
         if (selected) {
-            this.selectedObject = object;
+            if (this.currentObject) {
+                this.currentObject.userData.transform = false;
+            }
+            this.currentObject = object;
             this.selectedObjects[object.uuid] = object;
-            object.material.color.setHex(this.settings.colors.selected);
+            object.material.color.setHex(this.settings.colors.current);
+            object.userData.transform = true;
+            this.transform.attach(object);
         }
         else {
-            this.selectedObject = null;
+            this.currentObject = null;
             this.selectedObjects[object.uuid] = null;
             delete this.selectedObjects[object.uuid];
             object.material.color.setHex(object.userData.color);
+            object.userData.transform = false;
+            this.transform.detach();
         }
 
         object.userData.selected = !! selected;
@@ -330,6 +346,18 @@ var MeshesJS = MeshesJS || {};
 
         // public event
         this.onObjectSelected(object, selected);
+    };
+
+    Viewer3D.prototype.unselectAllObjects = function() {
+        for (var name in this.selectedObjects) {
+            this.setObjectSelected(this.selectedObjects[name], false);
+        }
+    };
+
+    Viewer3D.prototype.selectAllObjects = function() {
+        for (var name in this.objects) {
+            this.setObjectSelected(this.objects[name], true);
+        }
     };
 
     Viewer3D.prototype.addObject = function(name, object, options) {
@@ -390,27 +418,13 @@ var MeshesJS = MeshesJS || {};
         var self = this;
         self.events.addEventListener(object, 'mouseup', function(event) {
             if (! self.controlsChange) {
-                self.setObjectSelected(object, ! object.userData.selected);
-                if (object.userData.transform && ! object.userData.selected) {
-                    object.userData.transform = false;
-                    self.transform.detach();
+                if (object.userData.selected && ! object.userData.transform) {
+                    object.userData.selected = false;
                 }
+                self.setObjectSelected(object, ! object.userData.selected)
                 self.render();
             }
         }, false);
-
-        /*self.events.addEventListener(object, 'dblclick', function(event) {
-            if (object.userData.transform) {
-                self.transform.detach();
-                object.userData.transform = false;
-                self.setObjectSelected(object, false);
-            } else {
-                self.transform.attach(object);
-                object.userData.transform = true;
-                self.setObjectSelected(object, true);
-            }
-            self.render();
-        }, false);*/
 
         // register and add object to scene
         this.objects[name] = object;
