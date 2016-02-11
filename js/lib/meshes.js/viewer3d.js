@@ -94,10 +94,18 @@ var MeshesJS = MeshesJS || {};
         self.controls = new THREE.OrbitControls(self.camera, self.canvas);
         self.controls.noKeys = true;
 
+        self.controlsChange = false;
+
         self.controls.addEventListener('change', function() {
+            self.controlsChange = true;
             self.render();
         });
 
+        self.controls.addEventListener('end', function() {
+            self.controlsChange = false;
+        });
+
+        // transform controls
         self.transform = new THREE.TransformControls(self.camera, self.canvas);
         self.transform.addEventListener('change', function() {
             self.render();
@@ -205,6 +213,7 @@ var MeshesJS = MeshesJS || {};
     Viewer3D.prototype.setView = function(view) {
         this.settings.view = view !== undefined ? view : this.defaults.view;
         this.view.set(this.settings.view);
+        this.controlsChange = false;
     };
 
     Viewer3D.prototype.setBuildVolume = function(size) {
@@ -243,7 +252,7 @@ var MeshesJS = MeshesJS || {};
             this.objects[name].material.dispose();
 
             // remove events listeners
-            this.events.removeEventListener(this.objects[name], 'click', true);
+            this.events.removeEventListener(this.objects[name], 'mouseup', true);
 
             // reset/delete reference
             this.objects[name] = null;
@@ -353,9 +362,11 @@ var MeshesJS = MeshesJS || {};
 
         // events listeners
         var self = this;
-        self.events.addEventListener(object, 'click', function(event) {
-            self.setObjectSelected(object, ! object.userData.selected);
-            self.render();
+        self.events.addEventListener(object, 'mouseup', function(event) {
+            if (! self.controlsChange) {
+                self.setObjectSelected(object, ! object.userData.selected);
+                self.render();
+            }
         }, false);
 
         // register and add object to scene
