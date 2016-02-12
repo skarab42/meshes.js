@@ -166,19 +166,14 @@ var MeshesJS = MeshesJS || {};
                     self.transform.setMode('scale');
                     break;
 
-                case 17: // Ctrl = snap to grid
-                    self.transform.setTranslationSnap(self.settings.grid.smallCell.size);
-                    self.transform.setRotationSnap(THREE.Math.degToRad(10));
-                    break;
-            }
-            self.render();
-        });
-
-        window.addEventListener('keyup', function(event) {
-            switch (event.keyCode) {
-                case 17: // Ctrl = reset snap to grid
-                    self.transform.setTranslationSnap(null);
-                    self.transform.setRotationSnap(null);
+                case 71: // Ctrl = snap to grid
+                    if (self.transform.translationSnap) {
+                        self.transform.setTranslationSnap(null);
+                        self.transform.setRotationSnap(null);
+                    } else {
+                        self.transform.setTranslationSnap(self.settings.grid.smallCell.size);
+                        self.transform.setRotationSnap(THREE.Math.degToRad(10));
+                    }
                     break;
             }
             self.render();
