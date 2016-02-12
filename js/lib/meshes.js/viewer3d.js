@@ -128,8 +128,7 @@ var MeshesJS = MeshesJS || {};
             }
         });
 
-        self.currentObject = null;
-
+        // keyboard events
         window.addEventListener('keydown', function(event) {
             //console.log(event.keyCode);
             switch (event.keyCode) {
@@ -234,6 +233,7 @@ var MeshesJS = MeshesJS || {};
 
         // objects collection
         self.selectedObjects = {};
+        self.currentObject = null;
         self.objects = {};
 
         // render
