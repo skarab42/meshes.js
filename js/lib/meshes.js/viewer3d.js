@@ -128,11 +128,15 @@ var MeshesJS = MeshesJS || {};
             }
         });
 
+        // snap to grid by default
+        self.transform.setTranslationSnap(self.settings.grid.smallCell.size);
+        self.transform.setRotationSnap(THREE.Math.degToRad(10));
+
         // keyboard events
         window.addEventListener('keydown', function(event) {
             console.log(['key', event.keyCode]);
             switch (event.keyCode) {
-                case 69: // e = transformation mode
+                case 72: // h = transformation mode
                     if (! self.currentObject) break;
                     if (self.currentObject.userData.transform) {
                         self.currentObject.userData.transform = false;
@@ -175,8 +179,12 @@ var MeshesJS = MeshesJS || {};
                     }
                     break;
 
-                case 74: // s = scale
+                case 74: // j = join (group) selected objects
                     self.groupSelectedObjects();
+                    break;
+
+                case 69: // e = explode (ungroup) selected objects
+                    self.ungroupSelectedObjects();
                     break;
 
             }
@@ -497,6 +505,12 @@ var MeshesJS = MeshesJS || {};
 
     // -------------------------------------------------------------------------
 
+    Viewer3D.prototype.ungroupSelectedObjects = function() {
+        for (var name in this.selectedObjects) {
+            this.ungroupObject(name);
+        }
+    };
+
     Viewer3D.prototype.groupSelectedObjects = function() {
         var names = Object.keys(this.selectedObjects);
 
@@ -508,10 +522,10 @@ var MeshesJS = MeshesJS || {};
         var name = names[0];
         var groups = [];
         var offset = 0;
-        var groupLength;
+        var groupLength, mesh;
 
         for (var n in this.selectedObjects) {
-            var mesh = this.selectedObjects[n];
+            mesh = this.selectedObjects[n];
             mesh.updateMatrix();
 
             if (mesh.geometry instanceof THREE.BufferGeometry) {
@@ -531,10 +545,182 @@ var MeshesJS = MeshesJS || {};
         mesh = new THREE.Mesh(geometry, this.getMaterial());
         mesh.userData.groups = groups;
 
-        console.log(groups);
+        var move = mesh.geometry.center();
+        var box = mesh.geometry.boundingBox;
+        var size = new THREE.Vector3(
+            Math.abs(box.max.x - box.min.x),
+            Math.abs(box.max.y - box.min.y),
+            Math.abs(box.max.z - box.min.z)
+        );
 
-        this.addObject(name, mesh);
+        this.addObject(name, mesh, { position: {
+            x: Math.abs(move.x) - (size.x / 2) + mesh.position.x,
+            y: Math.abs(move.y) - (size.y / 2) + mesh.position.y,
+            z: Math.abs(move.z) - (size.z / 2) + mesh.position.z
+        }});
+
+        //this.addObject(name, mesh);
         this.setObjectSelected(name, true);
+    };
+
+    Viewer3D.prototype.groupFaces = function(faces, vertices) {
+        // groups of faces
+        var faces_groups = [];
+
+        // groups of vertex hashs
+        var vertex_groups = [];
+
+        // return a vertex hash
+        function vertexHash(vertex) {
+            return vertex.x + '|' + vertex.y + '|' + vertex.z;
+        }
+
+        // return group ids
+        function findHashGroups() {
+            var groups = [];
+            for (var i = 0; i < vertex_groups.length; i++) {
+                if (vertex_groups[i][h1]
+                ||  vertex_groups[i][h2]
+                ||  vertex_groups[i][h3]) {
+                    groups.push(i);
+                }
+            }
+            return _.uniq(groups);
+        }
+
+        // push the face in group id
+        function pushFaceInGroup(id) {
+            vertex_groups[id] || (vertex_groups[id] = []);
+            faces_groups[id]  || (faces_groups[id]  = []);
+            vertex_groups[id][h1] = true;
+            vertex_groups[id][h2] = true;
+            vertex_groups[id][h3] = true;
+            faces_groups[id].push(face);
+        }
+
+        var face, h1, h2, h3, g;
+        var groupId = -1;
+
+        // for each face
+        for (var i = 0; i < faces.length; i++) {
+            // current face
+            face = faces[i];
+
+            // vertex hashs
+            h1 = vertexHash(vertices[face.a]);
+            h2 = vertexHash(vertices[face.b]);
+            h3 = vertexHash(vertices[face.c]);
+
+            // find owner groups
+            g = findHashGroups();
+
+            // no group found
+            if (! g.length) {
+                // increment group id
+                groupId++;
+
+                // add face to group
+                pushFaceInGroup(groupId);
+            }
+
+            // only in one group
+            else if (g.length == 1) {
+                // add face to group
+                pushFaceInGroup(g[0]);
+            }
+
+            // share two group
+            else if (g.length == 2) {
+                // add face to first group
+                pushFaceInGroup(g[0]);
+
+                // merge the two group
+                faces_groups[g[0]]  = faces_groups[g[0]].concat(faces_groups[g[1]]);
+                vertex_groups[g[0]] = _.merge(vertex_groups[g[0]], vertex_groups[g[1]]);
+
+                // reset the second group
+                faces_groups[g[1]]  = [];
+                vertex_groups[g[1]] = [];
+            }
+        }
+
+        // reset vertex group
+        vertex_groups = null;
+
+        // remove empty group
+        faces_groups = _.filter(faces_groups, function(o) { return o.length; });
+
+        // return grouped faces
+        return faces_groups;
+    };
+
+    Viewer3D.prototype.ungroupObject = function(name) {
+        var mesh = this.getObject(name);
+
+        if (! mesh) {
+            return null; // todo: error message
+        }
+
+        if (mesh.geometry instanceof THREE.BufferGeometry) {
+            mesh.geometry = new THREE.Geometry().fromBufferGeometry(mesh.geometry);
+        }
+
+        var vertices = mesh.geometry.vertices;
+        var groups = this.groupFaces(mesh.geometry.faces, vertices);
+
+        // no group found
+        if (groups.length < 2) {
+            return null;
+        }
+
+        // current group
+        var group, face, v1, v2, v3, faces;
+        var geometry, length, normal, newName;
+
+        for (var n = 0; n < groups.length; n++) {
+            geometry = new THREE.Geometry();
+            group = groups[n];
+            faces = [];
+            for (var i = 0; i < group.length; i++) {
+                face = group[i];
+                v1 = vertices[face.a];
+                v2 = vertices[face.b];
+                v3 = vertices[face.c];
+
+                geometry.vertices.push(new THREE.Vector3(v1.x, v1.y, v1.z));
+                geometry.vertices.push(new THREE.Vector3(v2.x, v2.y, v2.z));
+                geometry.vertices.push(new THREE.Vector3(v3.x, v3.y, v3.z));
+
+                length = geometry.vertices.length;
+                normal = new THREE.Vector3(face.normal.x, face.normal.y, face.normal.z);
+                geometry.faces.push(new THREE.Face3(length-3, length-2, length-1, normal));
+            }
+
+            geometry.computeBoundingBox();
+            geometry.computeBoundingSphere();
+
+            newName = this.getUniqueName(mesh.name + ' (' + n + ')');
+            object = new THREE.Mesh(geometry, this.getMaterial());
+
+            var move = object.geometry.center();
+            var box = object.geometry.boundingBox;
+            var size = new THREE.Vector3(
+                Math.abs(box.max.x - box.min.x),
+                Math.abs(box.max.y - box.min.y),
+                Math.abs(box.max.z - box.min.z)
+            );
+
+            this.addObject(newName, object, { position: {
+                x: Math.abs(move.x) - (size.x / 2) + mesh.position.x,
+                y: Math.abs(move.y) - (size.y / 2) + mesh.position.y,
+                z: Math.abs(move.z) - (size.z / 2) + mesh.position.z
+            }});
+
+            //this.setObjectSelected(newName, true);
+        }
+
+        this.setObjectSelected(name, false);
+        this.removeObject(name);
     };
 
     // -------------------------------------------------------------------------
