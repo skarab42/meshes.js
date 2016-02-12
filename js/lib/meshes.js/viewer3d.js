@@ -130,7 +130,7 @@ var MeshesJS = MeshesJS || {};
 
         // keyboard events
         window.addEventListener('keydown', function(event) {
-            //console.log(event.keyCode);
+            console.log(['key', event.keyCode]);
             switch (event.keyCode) {
                 case 69: // e = transformation mode
                     if (! self.currentObject) break;
@@ -165,7 +165,7 @@ var MeshesJS = MeshesJS || {};
                     self.transform.setMode('scale');
                     break;
 
-                case 71: // Ctrl = snap to grid
+                case 71: // g = snap to grid
                     if (self.transform.translationSnap) {
                         self.transform.setTranslationSnap(null);
                         self.transform.setRotationSnap(null);
@@ -174,6 +174,11 @@ var MeshesJS = MeshesJS || {};
                         self.transform.setRotationSnap(THREE.Math.degToRad(10));
                     }
                     break;
+
+                case 74: // s = scale
+                    self.groupSelectedObjects();
+                    break;
+
             }
             self.render();
         });
@@ -322,7 +327,6 @@ var MeshesJS = MeshesJS || {};
 
             // remove events listeners
             this.events.removeEventListener(this.objects[name], 'mouseup', true);
-            this.events.removeEventListener(this.objects[name], 'dblclick', true);
 
             // reset/delete reference
             this.objects[name] = null;
@@ -458,7 +462,7 @@ var MeshesJS = MeshesJS || {};
         // events listeners
         var self = this;
         self.events.addEventListener(object, 'mouseup', function(event) {
-            if (! self.transformChange) {
+            if (! self.transformChange && ! self.controlsChange) {
                 if (object.userData.selected && ! object.userData.transform) {
                     object.userData.selected = false;
                 }
@@ -489,6 +493,48 @@ var MeshesJS = MeshesJS || {};
 
     Viewer3D.prototype.hideObject = function(name) {
         this.toggleObjectVisibility(name, false);
+    };
+
+    // -------------------------------------------------------------------------
+
+    Viewer3D.prototype.groupSelectedObjects = function() {
+        var names = Object.keys(this.selectedObjects);
+
+        if (names.length < 2) {
+            return null;
+        }
+
+        var geometry = new THREE.Geometry();
+        var name = names[0];
+        var groups = [];
+        var offset = 0;
+        var groupLength;
+
+        for (var n in this.selectedObjects) {
+            var mesh = this.selectedObjects[n];
+            mesh.updateMatrix();
+
+            if (mesh.geometry instanceof THREE.BufferGeometry) {
+                mesh.geometry = new THREE.Geometry().fromBufferGeometry(mesh.geometry);
+            }
+
+            groupLength = mesh.geometry.vertices.length;
+            groups.push([offset, groupLength]);
+            offset += groupLength;
+
+            geometry.merge(mesh.geometry, mesh.matrix);
+
+            this.setObjectSelected(n, false);
+            this.removeObject(n);
+        }
+
+        mesh = new THREE.Mesh(geometry, this.getMaterial());
+        mesh.userData.groups = groups;
+
+        console.log(groups);
+
+        this.addObject(name, mesh);
+        this.setObjectSelected(name, true);
     };
 
     // -------------------------------------------------------------------------
