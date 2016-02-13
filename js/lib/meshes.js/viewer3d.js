@@ -77,7 +77,8 @@ var MeshesJS = MeshesJS || {};
                 hideHelper: 'h',
                 wireframe: 'w',
                 applyTransformation: 'x',
-                exportSTL: 'o',
+                exportBinarySTL: 'n',
+                exportAsciiSTL: 'm',
                 setView: {
                     default: '0',
                     front: '2',
@@ -232,8 +233,12 @@ var MeshesJS = MeshesJS || {};
                     self.wireframeSelectedObjects();
                     break;
 
-                case actions.exportSTL:
-                    self.exportSelectedObjects();
+                case actions.exportBinarySTL:
+                    self.exportSelectedObjects({ outputType: 'binary' });
+                    break;
+
+                case actions.exportAsciiSTL:
+                    self.exportSelectedObjects({ outputType: 'ascii' });
                     break;
 
                 // views
@@ -571,14 +576,12 @@ var MeshesJS = MeshesJS || {};
 
     // -------------------------------------------------------------------------
 
-    Viewer3D.prototype.exportSelectedObjects = function() {
+    Viewer3D.prototype.exportSelectedObjects = function(settings) {
         var names = Object.keys(this.selectedObjects);
         if (! names.length) {
             return null;
         }
-        var writer = new MeshesJS.STLWriter(this.selectedObjects, {
-            //outputType: 'ascii'
-        });
+        var writer = new MeshesJS.STLWriter(this.selectedObjects, settings);
         writer.save();
     };
 
