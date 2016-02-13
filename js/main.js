@@ -1,10 +1,25 @@
 // create 3D viewer instance
 var viewer3d = new MeshesJS.Viewer3D({
-    size: { width: 600, height: 300 }
+    //size: { width: 600, height: 300 }
 });
 
 // add viewer canvas to DOM
 var $viewer3d = $('#viewer3d').html(viewer3d.canvas);
+
+// full screen
+function fullScreen() {
+    viewer3d.setSize({
+        width: $(window).width(),
+        height: $(window).height()
+    });
+    viewer3d.render();
+}
+
+$(window).resize(function() {
+    fullScreen();
+});
+
+fullScreen();
 
 // file input
 var $fileInput = $('#file input:file');
