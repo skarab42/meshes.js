@@ -77,6 +77,7 @@ var MeshesJS = MeshesJS || {};
                 hideHelper: 'h',
                 wireframe: 'w',
                 applyTransformation: 'x',
+                exportSTL: 'o',
                 setView: {
                     default: '0',
                     front: '2',
@@ -229,6 +230,10 @@ var MeshesJS = MeshesJS || {};
 
                 case actions.wireframe:
                     self.wireframeSelectedObjects();
+                    break;
+
+                case actions.exportSTL:
+                    self.exportSelectedObjects();
                     break;
 
                 // views
@@ -562,6 +567,19 @@ var MeshesJS = MeshesJS || {};
 
     Viewer3D.prototype.hideObject = function(name) {
         this.toggleObjectVisibility(name, false);
+    };
+
+    // -------------------------------------------------------------------------
+
+    Viewer3D.prototype.exportSelectedObjects = function() {
+        var names = Object.keys(this.selectedObjects);
+        if (! names.length) {
+            return null;
+        }
+        var writer = new MeshesJS.STLWriter(this.selectedObjects, {
+            //outputType: 'ascii'
+        });
+        writer.save();
     };
 
     // -------------------------------------------------------------------------
