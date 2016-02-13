@@ -26,6 +26,9 @@
                 left: auto;
                 right:0;
             }
+            #info a {
+                color: #eeeeee;
+            }
         </style>
     </head>
     <body>
@@ -36,23 +39,30 @@
             <input type="file" multiple="multiple" />
         </div>
         <div id="info">
-            <strong>Keyboard: </strong><br />
-            [t] = translate<br />
-            [r] = rotate<br />
-            [s] = scale<br />
-            [j] = join (group) selected objects<br />
-            [e] = explode (ungroup) selected objects<br />
-            [a] = (un)select all<br />
-            [g] = snap to grid / free move<br />
-            [h] = show / hide transformation helper<br />
-            <br /><strong>Views: </strong><br />
-            [0] = default<br />
-            [2] = front<br />
-            [6] = right<br />
-            [8] = back<br />
-            [4] = left<br />
-            [9] = top<br />
-            [3] = bottom
+            <p>
+                [ <a href="https://github.com/lautr3k/meshes.js" target="_blank">github.com/lautr3k/meshes.js</a> ]
+            </p>
+            <p>
+                <strong>Keyboard: </strong><br />
+                [t] = translate<br />
+                [r] = rotate<br />
+                [s] = scale<br />
+                [j] = join (group) selected objects<br />
+                [e] = explode (ungroup) selected objects<br />
+                [a] = (un)select all<br />
+                [g] = snap to grid / free move<br />
+                [h] = show / hide transformation helper
+            </p>
+            <p>
+                <strong>Views: </strong><br />
+                [0] = default<br />
+                [2] = front<br />
+                [6] = right<br />
+                [8] = back<br />
+                [4] = left<br />
+                [9] = top<br />
+                [3] = bottom
+            </p>
         </div>
         <script src="js/lib/vendor/jquery/jquery-2.1.4.min.js" type="text/javascript"></script>
         <script src="js/lib/vendor/lodash/lodash.min.js" type="text/javascript"></script>
