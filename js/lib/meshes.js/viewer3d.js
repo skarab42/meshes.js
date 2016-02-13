@@ -66,6 +66,7 @@ var MeshesJS = MeshesJS || {};
         keyboard: {
             enabled: true,
             actions: {
+                remove: 'd',
                 translate: 't',
                 rotate: 'r',
                 scale: 's',
@@ -74,6 +75,7 @@ var MeshesJS = MeshesJS || {};
                 selectAll: 'a',
                 snapToGrid: 'g',
                 hideHelper: 'h',
+                applyTransformation: 'x',
                 setView: {
                     default: '0',
                     front: '2',
@@ -82,8 +84,7 @@ var MeshesJS = MeshesJS || {};
                     left: '4',
                     top: '9',
                     bottom: '3'
-                },
-                applyTransformation: 'x'
+                }
             }
         }
     };
@@ -219,6 +220,10 @@ var MeshesJS = MeshesJS || {};
 
                 case actions.applyTransformation:
                     self.transformSelectedObjects();
+                    break;
+
+                case actions.remove:
+                    self.removeSelectedObjects();
                     break;
 
                 // views
@@ -372,6 +377,9 @@ var MeshesJS = MeshesJS || {};
 
     Viewer3D.prototype.removeObject = function(name) {
         if (this.objects[name]) {
+            // unselect object
+            this.setObjectSelected(name, false);
+            
             // remove frome the scene
             this.scene.remove(this.objects[name]);
 
@@ -392,6 +400,12 @@ var MeshesJS = MeshesJS || {};
             return true;
         }
         return false;
+    };
+
+    Viewer3D.prototype.removeSelectedObjects = function() {
+        for (var name in this.selectedObjects) {
+            this.removeObject(name);
+        }
     };
 
     Viewer3D.prototype.getUniqueName = function(name) {
