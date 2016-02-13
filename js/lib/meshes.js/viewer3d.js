@@ -73,7 +73,16 @@ var MeshesJS = MeshesJS || {};
                 ungroup: 'e',
                 selectAll: 'a',
                 snapToGrid: 'g',
-                hideHelper: 'h'
+                hideHelper: 'h',
+                setView: {
+                    default: '0',
+                    front: '2',
+                    right: '6',
+                    back: '8',
+                    left: '4',
+                    top: '9',
+                    bottom: '3'
+                }
             }
         }
     };
@@ -206,6 +215,15 @@ var MeshesJS = MeshesJS || {};
                 case actions.ungroup: // e = explode (ungroup) selected objects
                     self.ungroupSelectedObjects();
                     break;
+
+                // views
+                case actions.setView.default: self.setView(); break;
+                case actions.setView.front: self.setView('front'); break;
+                case actions.setView.right: self.setView('right'); break;
+                case actions.setView.back: self.setView('back'); break;
+                case actions.setView.left: self.setView('left'); break;
+                case actions.setView.top: self.setView('top'); break;
+                case actions.setView.bottom: self.setView('bottom'); break;
 
                 // nothing to do, no render
                 default: render = false;
