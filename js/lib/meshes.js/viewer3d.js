@@ -82,7 +82,8 @@ var MeshesJS = MeshesJS || {};
                     left: '4',
                     top: '9',
                     bottom: '3'
-                }
+                },
+                applyTransformation: 'x'
             }
         }
     };
@@ -167,7 +168,7 @@ var MeshesJS = MeshesJS || {};
             var char = String.fromCharCode(event.keyCode);
 
             switch (char) {
-                case actions.hideHelper: // h = transformation mode
+                case actions.hideHelper:
                     if (! self.currentObject) break;
                     if (self.currentObject.userData.transform) {
                         self.currentObject.userData.transform = false;
@@ -178,7 +179,7 @@ var MeshesJS = MeshesJS || {};
                     }
                     break;
 
-                case actions.selectAll: // a = (un)select all
+                case actions.selectAll:
                     if (Object.keys(self.selectedObjects).length > 0) {
                         self.unselectAllObjects();
                     } else {
@@ -186,19 +187,19 @@ var MeshesJS = MeshesJS || {};
                     }
                     break;
 
-                case actions.translate: // t = translate
+                case actions.translate:
                     self.transform.setMode('translate');
                     break;
 
-                case actions.rotate: // r = rotate
+                case actions.rotate:
                     self.transform.setMode('rotate');
                     break;
 
-                case actions.scale: // s = scale
+                case actions.scale:
                     self.transform.setMode('scale');
                     break;
 
-                case actions.snapToGrid: // g = snap to grid
+                case actions.snapToGrid:
                     if (self.transform.translationSnap) {
                         self.transform.setTranslationSnap(null);
                         self.transform.setRotationSnap(null);
@@ -208,12 +209,16 @@ var MeshesJS = MeshesJS || {};
                     }
                     break;
 
-                case actions.group: // j = join (group) selected objects
+                case actions.group:
                     self.groupSelectedObjects();
                     break;
 
-                case actions.ungroup: // e = explode (ungroup) selected objects
+                case actions.ungroup:
                     self.ungroupSelectedObjects();
+                    break;
+
+                case actions.applyTransformation:
+                    self.transformSelectedObjects();
                     break;
 
                 // views
@@ -362,7 +367,7 @@ var MeshesJS = MeshesJS || {};
         if (this[name] && (this[name] instanceof THREE.Object3D)) {
             return this[name];
         }
-        return null;
+        throw 'Undefined object: ' + name;
     };
 
     Viewer3D.prototype.removeObject = function(name) {
@@ -407,10 +412,6 @@ var MeshesJS = MeshesJS || {};
     Viewer3D.prototype.setObjectSelected = function(object, selected) {
         var selected = selected === undefined ? true : selected;
         var object = object.uuid ? object : this.getObject(object);
-
-        if (! object) {
-            throw 'Undefined object';
-        }
 
         if (selected) {
             if (this.currentObject) {
@@ -462,8 +463,8 @@ var MeshesJS = MeshesJS || {};
 
         // merge user and defaults options
         var options = _.defaults(options || {}, {
-            position: {},
-            rotation: {},
+            position: { x: 0, y: 0, z: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
             replace: false,
             unique: false,
             render: true
@@ -485,19 +486,19 @@ var MeshesJS = MeshesJS || {};
         // force object name
         object.name = name;
 
+        // normalize geometry
+        if (object.geometry instanceof THREE.BufferGeometry) {
+            object.geometry = new THREE.Geometry().fromBufferGeometry(object.geometry);
+            object.geometry.computeBoundingSphere();
+            object.geometry.computeBoundingBox();
+        }
+
+        // normalize geometry position
+        this.fixObjectOrigin(object);
+
         // set object position and rotation
         object.position = _.assign(object.position, options.position);
         object.rotation = _.assign(object.rotation, options.rotation);
-
-        // normalize geometry position
-        object.geometry.center();
-        var box = object.geometry.boundingBox;
-        var size = new THREE.Vector3(
-            Math.abs(box.max.x - box.min.x),
-            Math.abs(box.max.y - box.min.y),
-            Math.abs(box.max.z - box.min.z)
-        );
-        object.geometry.translate(size.x / 2, size.y / 2, size.z / 2);
 
         // set object up to Z
         object.up = THREE.Vector3(0, 0, 1);
@@ -542,6 +543,50 @@ var MeshesJS = MeshesJS || {};
 
     Viewer3D.prototype.hideObject = function(name) {
         this.toggleObjectVisibility(name, false);
+    };
+
+    // -------------------------------------------------------------------------
+
+    Viewer3D.prototype.getObjectSize = function(name) {
+        var object = name instanceof THREE.Object3D ? name : this.getObject(name);
+        var box = object.geometry.boundingBox;
+
+        return new THREE.Vector3(
+            Math.abs(box.max.x - box.min.x),
+            Math.abs(box.max.y - box.min.y),
+            Math.abs(box.max.z - box.min.z)
+        );
+    };
+
+    Viewer3D.prototype.fixObjectOrigin = function(name) {
+        var object = name instanceof THREE.Object3D ? name : this.getObject(name);
+        var size = this.getObjectSize(name);
+        var offsets = object.geometry.center();
+
+        object.geometry.translate(size.x / 2, size.y / 2, size.z / 2);
+        object.position.x -= offsets.x + (size.x / 2);
+        object.position.y -= offsets.y + (size.y / 2);
+        object.position.z -= offsets.z + (size.z / 2);
+    };
+
+    Viewer3D.prototype.transformObject = function(name) {
+        var object = name instanceof THREE.Object3D ? name : this.getObject(name);
+
+        object.updateMatrix();
+        object.geometry.applyMatrix(object.matrix);
+        object.position.set(0, 0, 0);
+        object.rotation.set(0, 0, 0);
+        object.scale.set(1, 1, 1);
+        object.updateMatrix();
+
+        this.fixObjectOrigin(name);
+        this.transform.update();
+    };
+
+    Viewer3D.prototype.transformSelectedObjects = function() {
+        for (var name in this.selectedObjects) {
+            this.transformObject(name);
+        }
     };
 
     // -------------------------------------------------------------------------
@@ -698,13 +743,7 @@ var MeshesJS = MeshesJS || {};
     Viewer3D.prototype.ungroupObject = function(name) {
         var mesh = this.getObject(name);
 
-        if (! mesh) {
-            return null; // todo: error message
-        }
-
-        if (mesh.geometry instanceof THREE.BufferGeometry) {
-            mesh.geometry = new THREE.Geometry().fromBufferGeometry(mesh.geometry);
-        }
+        this.transformObject(mesh);
 
         var vertices = mesh.geometry.vertices;
         var groups = this.groupFaces(mesh.geometry.faces, vertices);
@@ -743,21 +782,12 @@ var MeshesJS = MeshesJS || {};
             newName = this.getUniqueName(mesh.name + ' (' + n + ')');
             object = new THREE.Mesh(geometry, this.getMaterial());
 
-            var move = object.geometry.center();
-            var box = object.geometry.boundingBox;
-            var size = new THREE.Vector3(
-                Math.abs(box.max.x - box.min.x),
-                Math.abs(box.max.y - box.min.y),
-                Math.abs(box.max.z - box.min.z)
-            );
-
+            this.transformObject(object);
             this.addObject(newName, object, { position: {
-                x: Math.abs(move.x) - (size.x / 2) + mesh.position.x,
-                y: Math.abs(move.y) - (size.y / 2) + mesh.position.y,
-                z: Math.abs(move.z) - (size.z / 2) + mesh.position.z
+                x: object.position.x + mesh.position.x,
+                y: object.position.y + mesh.position.y,
+                z: object.position.z + mesh.position.z
             }});
-
-            //this.setObjectSelected(newName, true);
         }
 
         this.setObjectSelected(name, false);
