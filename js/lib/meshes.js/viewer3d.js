@@ -62,6 +62,19 @@ var MeshesJS = MeshesJS || {};
         colors: {
             selected: 0xff0000,
             current: 0x00ff00
+        },
+        keyboard: {
+            enabled: true,
+            actions: {
+                translate: 't',
+                rotate: 'r',
+                scale: 's',
+                group: 'j',
+                ungroup: 'e',
+                selectAll: 'a',
+                snapToGrid: 'g',
+                hideHelper: 'h'
+            }
         }
     };
 
@@ -133,10 +146,19 @@ var MeshesJS = MeshesJS || {};
         self.transform.setRotationSnap(THREE.Math.degToRad(10));
 
         // keyboard events
-        window.addEventListener('keydown', function(event) {
-            console.log(['key', event.keyCode]);
-            switch (event.keyCode) {
-                case 72: // h = transformation mode
+        window.addEventListener('keypress', function(event) {
+            if (! self.settings.keyboard.enabled) {
+                return true;
+            }
+
+            //console.log(['key', event.keyCode]);
+
+            var render = true;
+            var actions = self.settings.keyboard.actions;
+            var char = String.fromCharCode(event.keyCode);
+
+            switch (char) {
+                case actions.hideHelper: // h = transformation mode
                     if (! self.currentObject) break;
                     if (self.currentObject.userData.transform) {
                         self.currentObject.userData.transform = false;
@@ -145,31 +167,29 @@ var MeshesJS = MeshesJS || {};
                         self.currentObject.userData.transform = true;
                         self.transform.attach(self.currentObject);
                     }
-                    self.render();
                     break;
 
-                case 65: // a = (un)select all
+                case actions.selectAll: // a = (un)select all
                     if (Object.keys(self.selectedObjects).length > 0) {
                         self.unselectAllObjects();
                     } else {
                         self.selectAllObjects();
                     }
-                    self.render();
                     break;
 
-                case 84: // t = translate
+                case actions.translate: // t = translate
                     self.transform.setMode('translate');
                     break;
 
-                case 82: // r = rotate
+                case actions.rotate: // r = rotate
                     self.transform.setMode('rotate');
                     break;
 
-                case 83: // s = scale
+                case actions.scale: // s = scale
                     self.transform.setMode('scale');
                     break;
 
-                case 71: // g = snap to grid
+                case actions.snapToGrid: // g = snap to grid
                     if (self.transform.translationSnap) {
                         self.transform.setTranslationSnap(null);
                         self.transform.setRotationSnap(null);
@@ -179,16 +199,19 @@ var MeshesJS = MeshesJS || {};
                     }
                     break;
 
-                case 74: // j = join (group) selected objects
+                case actions.group: // j = join (group) selected objects
                     self.groupSelectedObjects();
                     break;
 
-                case 69: // e = explode (ungroup) selected objects
+                case actions.ungroup: // e = explode (ungroup) selected objects
                     self.ungroupSelectedObjects();
                     break;
 
+                // nothing to do, no render
+                default: render = false;
             }
-            self.render();
+
+            render && self.render();
         });
 
         // dom events (mouse)
