@@ -169,7 +169,7 @@ var MeshesJS = MeshesJS || {};
 
             var render = true;
             var actions = self.settings.keyboard.actions;
-            var char = String.fromCharCode(event.keyCode);
+            var char = String.fromCharCode(event.which || event.keyCode);
 
             switch (char) {
                 case actions.hideHelper:
