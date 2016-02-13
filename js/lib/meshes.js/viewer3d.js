@@ -75,6 +75,7 @@ var MeshesJS = MeshesJS || {};
                 selectAll: 'a',
                 snapToGrid: 'g',
                 hideHelper: 'h',
+                wireframe: 'w',
                 applyTransformation: 'x',
                 setView: {
                     default: '0',
@@ -224,6 +225,10 @@ var MeshesJS = MeshesJS || {};
 
                 case actions.remove:
                     self.removeSelectedObjects();
+                    break;
+
+                case actions.wireframe:
+                    self.wireframeSelectedObjects();
                     break;
 
                 // views
@@ -379,7 +384,7 @@ var MeshesJS = MeshesJS || {};
         if (this.objects[name]) {
             // unselect object
             this.setObjectSelected(name, false);
-            
+
             // remove frome the scene
             this.scene.remove(this.objects[name]);
 
@@ -557,6 +562,20 @@ var MeshesJS = MeshesJS || {};
 
     Viewer3D.prototype.hideObject = function(name) {
         this.toggleObjectVisibility(name, false);
+    };
+
+    // -------------------------------------------------------------------------
+
+    Viewer3D.prototype.wireframeObject = function(name, wireframe) {
+        var object = name instanceof THREE.Object3D ? name : this.getObject(name);
+        var wireframe = wireframe === undefined ? ! object.material.wireframe : wireframe;
+        object.material.wireframe = wireframe;
+    };
+
+    Viewer3D.prototype.wireframeSelectedObjects = function() {
+        for (var name in this.selectedObjects) {
+            this.wireframeObject(this.selectedObjects[name]);
+        }
     };
 
     // -------------------------------------------------------------------------
