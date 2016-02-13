@@ -117,6 +117,8 @@ var MeshesJS = MeshesJS || {};
 
         // set camera orbit around Z axis
         self.camera.up = new THREE.Vector3(0, 0, 1);
+        self.camera.near = 10;
+        self.camera.far = 10000;
 
         // orbit controls
         self.controls = new THREE.OrbitControls(self.camera, self.canvas);

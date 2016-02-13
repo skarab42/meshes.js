@@ -20,6 +20,8 @@ var MeshesJS = MeshesJS || {};
 
         geometry.translate(0.5, 0.5, 0);
 
+        geometry.translate(0, 0, -0.2);
+
         THREE.Mesh.call(this, geometry, material, THREE.Mesh);
 
         this.userData = _.defaultsDeep(settings || {}, Floor.userData);
