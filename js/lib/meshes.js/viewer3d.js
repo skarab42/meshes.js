@@ -75,6 +75,11 @@ var MeshesJS = MeshesJS || {};
         // self alias
         var self = this;
 
+        // objects collection
+        self.selectedObjects = {};
+        self.currentObject = null;
+        self.objects = {};
+
         // local settings
         self.defaults = _.defaultsDeep({}, settings || {}, Viewer3D.globalSettings);
 
@@ -101,7 +106,29 @@ var MeshesJS = MeshesJS || {};
         self.transform.setTranslationSnap(self.settings.grid.smallCell.size);
         self.transform.setRotationSnap(THREE.Math.degToRad(10));
 
-        self.transform.addEventListener('change', function() {
+        self.transform.addEventListener('objectChange', function() {
+            self.currentObject.userData.box.update(self.currentObject);
+            self.render();
+        });
+
+        self.transform.addEventListener('end', function() {
+            if (! self.currentObject) {
+                return true;
+            }
+            var targetObject;
+            var targetBox = new THREE.Box3();
+            var sourceBox = new THREE.Box3();
+            sourceBox = sourceBox.setFromObject(self.currentObject);
+            for (var name in self.objects) {
+                if (self.currentObject.name === name) {
+                    continue;
+                }
+                targetObject = self.objects[name];
+                targetBox = targetBox.setFromObject(targetObject);
+                if (targetBox.isIntersectionBox(sourceBox)) {
+                    console.log(self.currentObject.name, targetObject.name);
+                }
+            }
             self.render();
         });
 
@@ -175,11 +202,6 @@ var MeshesJS = MeshesJS || {};
 
         // Loader
         self.loader = new MeshesJS.Loader();
-
-        // objects collection
-        self.selectedObjects = {};
-        self.currentObject = null;
-        self.objects = {};
 
         // render
         self.render();
@@ -271,6 +293,9 @@ var MeshesJS = MeshesJS || {};
             // remove events listeners
             this.events.removeEventListener(this.objects[name], 'mouseup', true);
 
+            // remove bounding box helper
+            this.scene.remove(this.objects[name].userData.box);
+
             // reset/delete reference
             this.objects[name] = null;
             delete this.objects[name];
@@ -314,7 +339,8 @@ var MeshesJS = MeshesJS || {};
             }
             this.currentObject = object;
             this.selectedObjects[object.name] = object;
-            object.material.color.setHex(this.settings.colors.current);
+            //object.material.color.setHex(this.settings.colors.current);
+            object.userData.box.visible = true;
             object.userData.transform = true;
             this.transform.attach(object);
         }
@@ -322,7 +348,8 @@ var MeshesJS = MeshesJS || {};
             this.currentObject = null;
             this.selectedObjects[object.name] = null;
             delete this.selectedObjects[object.name];
-            object.material.color.setHex(object.userData.color);
+            //object.material.color.setHex(object.userData.color);
+            object.userData.box.visible = false;
             object.userData.transform = false;
             this.transform.detach();
             var names = Object.keys(this.selectedObjects);
@@ -404,6 +431,14 @@ var MeshesJS = MeshesJS || {};
         // backup original color
         object.userData.color = object.material.color.getHex();
 
+        // bounding box
+        var box = new THREE.BoxHelper(object);
+        box.material.color.setHex(object.userData.color);
+        box.material.emissive = new THREE.Color(255, 255, 255);
+        object.userData.box = box;
+        box.visible = false;
+        this.scene.add(box);
+
         // events listeners
         var self = this;
         self.events.addEventListener(object, 'mouseup', function(event) {
@@ -476,6 +511,11 @@ var MeshesJS = MeshesJS || {};
             Math.abs(box.max.y - box.min.y),
             Math.abs(box.max.z - box.min.z)
         );
+    };
+
+    Viewer3D.prototype.getObjectCenter = function(name) {
+        var size = this.getObjectSize(name);
+        return new THREE.Vector3(size.x / 2, size.y / 2, size.z / 2);
     };
 
     Viewer3D.prototype.fixObjectOrigin = function(name) {
