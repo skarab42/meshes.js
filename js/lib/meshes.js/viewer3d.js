@@ -127,6 +127,16 @@ var MeshesJS = MeshesJS || {};
                 targetBox = targetBox.setFromObject(targetObject);
                 if (targetBox.isIntersectionBox(sourceBox)) {
                     console.log(self.currentObject.name, targetObject.name);
+                    self.currentObject.userData.box.material.color.setHex(0xff0000);
+                    targetObject.userData.box.material.color.setHex(0xff0000);
+                    self.currentObject.userData.box.visible = true;
+                    targetObject.userData.box.visible = true;
+                }
+                else {
+                    targetObject.userData.box.material.color.setHex(targetObject.userData.color);
+                    if (! self.selectedObjects[targetObject.name]) {
+                        targetObject.userData.box.visible = false;
+                    }
                 }
             }
             self.render();
