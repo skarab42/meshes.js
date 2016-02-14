@@ -534,10 +534,6 @@ var MeshesJS = MeshesJS || {};
             mesh = this.selectedObjects[n];
             mesh.updateMatrix();
 
-            if (mesh.geometry instanceof THREE.BufferGeometry) {
-                mesh.geometry = new THREE.Geometry().fromBufferGeometry(mesh.geometry);
-            }
-
             groupLength = mesh.geometry.vertices.length;
             groups.push([offset, groupLength]);
             offset += groupLength;
