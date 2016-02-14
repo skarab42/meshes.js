@@ -26,7 +26,7 @@ var MeshesJS = MeshesJS || {};
             vertexColors: THREE.VertexColors
         });
 
-        THREE.LineSegments.call(this, geometry, material, THREE.LineSegments);
+        THREE.LineSegments.call(this, geometry, material);
 
         this.userData = _.defaultsDeep(settings || {}, Grid.userData);
 

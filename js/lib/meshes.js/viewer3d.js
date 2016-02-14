@@ -120,46 +120,28 @@ var MeshesJS = MeshesJS || {};
         self.camera.near = 10;
         self.camera.far = 10000;
 
+        // transform controls
+        self.transform = new MeshesJS.TransformControls(self.camera, self.canvas);
+        self.transform.setTranslationSnap(self.settings.grid.smallCell.size);
+        self.transform.setRotationSnap(THREE.Math.degToRad(10));
+        self.transform.addEventListener('change', function() {
+            self.render();
+        });
+
         // orbit controls
         self.controls = new THREE.OrbitControls(self.camera, self.canvas);
+        self.controls.change = false;
         self.controls.noKeys = true;
 
-        self.controlsChange = false;
-
         self.controls.addEventListener('change', function() {
-            self.controlsChange = true;
+            self.controls.change = true;
             self.transform.update();
             self.render();
         });
 
         self.controls.addEventListener('end', function() {
-            self.controlsChange = false;
+            self.controls.change = false;
         });
-
-        // transform controls
-        var transformTimer = null;
-        var transformChangeTime = null;
-        self.transformChange = false;
-        self.transform = new THREE.TransformControls(self.camera, self.canvas);
-        self.transform.addEventListener('change', function() {
-            transformChangeTime = Date.now();
-            self.transformChange = true;
-            self.render();
-            // fake end events
-            if (! transformTimer) {
-                transformTimer = setInterval(function() {
-                    if (Date.now() - transformChangeTime > 500) {
-                        self.transformChange = false;
-                        clearInterval(transformTimer);
-                        transformTimer = null;
-                    }
-                }, 100);
-            }
-        });
-
-        // snap to grid by default
-        self.transform.setTranslationSnap(self.settings.grid.smallCell.size);
-        self.transform.setRotationSnap(THREE.Math.degToRad(10));
 
         // keyboard events
         window.addEventListener('keypress', function(event) {
@@ -363,7 +345,7 @@ var MeshesJS = MeshesJS || {};
     Viewer3D.prototype.setView = function(view) {
         this.settings.view = view !== undefined ? view : this.defaults.view;
         this.view.set(this.settings.view);
-        this.controlsChange = false;
+        this.controls.change = false;
     };
 
     Viewer3D.prototype.setBuildVolume = function(size) {
@@ -543,7 +525,7 @@ var MeshesJS = MeshesJS || {};
         // events listeners
         var self = this;
         self.events.addEventListener(object, 'mouseup', function(event) {
-            if (! self.transformChange && ! self.controlsChange) {
+            if (! self.transform.change && ! self.controls.change) {
                 if (object.userData.selected && ! object.userData.transform) {
                     object.userData.selected = false;
                 }

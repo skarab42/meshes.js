@@ -18,11 +18,9 @@ var MeshesJS = MeshesJS || {};
         var geometry = new THREE.PlaneBufferGeometry(1, 1);
         var material = new THREE.MeshLambertMaterial();
 
-        geometry.translate(0.5, 0.5, 0);
+        geometry.translate(0.5, 0.5, -0.2);
 
-        geometry.translate(0, 0, -0.2);
-
-        THREE.Mesh.call(this, geometry, material, THREE.Mesh);
+        THREE.Mesh.call(this, geometry, material);
 
         this.userData = _.defaultsDeep(settings || {}, Floor.userData);
 

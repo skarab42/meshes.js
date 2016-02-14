@@ -34,7 +34,7 @@ var MeshesJS = MeshesJS || {};
         geometry.addAttribute('position', new THREE.BufferAttribute(vertices, 3));
         geometry.addAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-        THREE.LineSegments.call(this, geometry, material, THREE.LineSegments);
+        THREE.LineSegments.call(this, geometry, material);
 
         this.userData = _.defaultsDeep(settings || {}, Axis.userData);
 

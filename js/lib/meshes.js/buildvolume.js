@@ -21,7 +21,7 @@ var MeshesJS = MeshesJS || {};
 
         geometry.translate(0.5, 0.5, 0.5);
 
-        THREE.Mesh.call(this, geometry, material, THREE.Mesh);
+        THREE.Mesh.call(this, geometry, material);
 
         this.userData = _.defaultsDeep(settings || {}, BuildVolume.userData);
 
