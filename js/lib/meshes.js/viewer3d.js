@@ -64,31 +64,7 @@ var MeshesJS = MeshesJS || {};
             current: 0x00ff00
         },
         keyboard: {
-            enabled: true,
-            actions: {
-                remove: 'd',
-                translate: 't',
-                rotate: 'r',
-                scale: 's',
-                group: 'j',
-                ungroup: 'e',
-                selectAll: 'a',
-                snapToGrid: 'g',
-                hideHelper: 'h',
-                wireframe: 'w',
-                applyTransformation: 'x',
-                exportBinarySTL: 'n',
-                exportAsciiSTL: 'm',
-                setView: {
-                    default: '0',
-                    front: '2',
-                    right: '6',
-                    back: '8',
-                    left: '4',
-                    top: '9',
-                    bottom: '3'
-                }
-            }
+            enabled: true
         }
     };
 
@@ -124,6 +100,7 @@ var MeshesJS = MeshesJS || {};
         self.transform = new MeshesJS.TransformControls(self.camera, self.canvas);
         self.transform.setTranslationSnap(self.settings.grid.smallCell.size);
         self.transform.setRotationSnap(THREE.Math.degToRad(10));
+
         self.transform.addEventListener('change', function() {
             self.render();
         });
@@ -143,103 +120,8 @@ var MeshesJS = MeshesJS || {};
             self.controls.change = false;
         });
 
-        // keyboard events
-        window.addEventListener('keypress', function(event) {
-            if (! self.settings.keyboard.enabled) {
-                return true;
-            }
-
-            //console.log(['key', event.keyCode]);
-
-            var render = true;
-            var actions = self.settings.keyboard.actions;
-            var char = String.fromCharCode(event.which || event.keyCode);
-
-            switch (char) {
-                case actions.hideHelper:
-                    if (! self.currentObject) break;
-                    if (self.currentObject.userData.transform) {
-                        self.currentObject.userData.transform = false;
-                        self.transform.detach();
-                    } else {
-                        self.currentObject.userData.transform = true;
-                        self.transform.attach(self.currentObject);
-                    }
-                    break;
-
-                case actions.selectAll:
-                    if (Object.keys(self.selectedObjects).length > 0) {
-                        self.unselectAllObjects();
-                    } else {
-                        self.selectAllObjects();
-                    }
-                    break;
-
-                case actions.translate:
-                    self.transform.setMode('translate');
-                    break;
-
-                case actions.rotate:
-                    self.transform.setMode('rotate');
-                    break;
-
-                case actions.scale:
-                    self.transform.setMode('scale');
-                    break;
-
-                case actions.snapToGrid:
-                    if (self.transform.translationSnap) {
-                        self.transform.setTranslationSnap(null);
-                        self.transform.setRotationSnap(null);
-                    } else {
-                        self.transform.setTranslationSnap(self.settings.grid.smallCell.size);
-                        self.transform.setRotationSnap(THREE.Math.degToRad(10));
-                    }
-                    break;
-
-                case actions.group:
-                    self.groupSelectedObjects();
-                    break;
-
-                case actions.ungroup:
-                    self.ungroupSelectedObjects();
-                    break;
-
-                case actions.applyTransformation:
-                    self.transformSelectedObjects();
-                    break;
-
-                case actions.remove:
-                    self.removeSelectedObjects();
-                    break;
-
-                case actions.wireframe:
-                    self.wireframeSelectedObjects();
-                    break;
-
-                case actions.exportBinarySTL:
-                    self.exportSelectedObjects({ outputType: 'binary' });
-                    break;
-
-                case actions.exportAsciiSTL:
-                    self.exportSelectedObjects({ outputType: 'ascii' });
-                    break;
-
-                // views
-                case actions.setView.default: self.setView(); break;
-                case actions.setView.front: self.setView('front'); break;
-                case actions.setView.right: self.setView('right'); break;
-                case actions.setView.back: self.setView('back'); break;
-                case actions.setView.left: self.setView('left'); break;
-                case actions.setView.top: self.setView('top'); break;
-                case actions.setView.bottom: self.setView('bottom'); break;
-
-                // nothing to do, no render
-                default: render = false;
-            }
-
-            render && self.render();
-        });
+        // keyboard controls
+        self.keyboard = new MeshesJS.KeyboardControls(self, self.settings.keyboard);
 
         // dom events (mouse)
         self.events = new THREEx.DomEvents(self.camera, self.canvas);
