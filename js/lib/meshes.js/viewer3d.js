@@ -595,6 +595,7 @@ var MeshesJS = MeshesJS || {};
             object.position.y += difference.y;
             object.userData.box.update(object);
         }
+        this.transform.update();
         //console.log(width, height);
     };
 
