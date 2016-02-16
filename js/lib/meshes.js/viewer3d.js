@@ -106,52 +106,10 @@ var MeshesJS = MeshesJS || {};
         self.transform.setTranslationSnap(self.settings.grid.smallCell.size);
         self.transform.setRotationSnap(THREE.Math.degToRad(10));
 
-        function higlightIntersectedObjects() {
-            var results = self.intersectObject(self.currentObject);
-
-            if (results[0].length) {
-                self.currentObject.userData.box.material.color.setHex(0xff0000);
-            } else {
-                self.currentObject.userData.box.material.color.setHex(
-                    self.currentObject.userData.color
-                );
-            }
-
-            var object;
-
-            for (var i = 0; i < results[0].length; i++) {
-                object = results[0][i];
-                object.userData.box.visible = true;
-                object.userData.box.intersect = true;
-                object.userData.box.material.color.setHex(0xff0000);
-                console.log('intersect:', object.name);
-            }
-
-            var subresults;
-
-            for (var i = 0; i < results[1].length; i++) {
-                subresults = null;
-                object = results[1][i];
-                if (object.userData.box.intersect) {
-                    subresults = self.intersectObject(object);
-                }
-                if (! subresults || ! subresults[0].length) {
-                    object.userData.box.visible = false;
-                    object.userData.box.material.color.setHex(object.userData.color);
-                }
-            }
-        }
-
         self.transform.addEventListener('objectChange', function() {
             self.currentObject.userData.box.update(self.currentObject);
-            higlightIntersectedObjects();
+            self.higlightIntersectedObjects();
             self.render();
-        });
-
-        self.transform.addEventListener('end', function() {
-            //self.currentObject.userData.box.update(self.currentObject);
-            //higlightIntersectedObjects();
-            //self.render();
         });
 
         // orbit controls
@@ -364,6 +322,7 @@ var MeshesJS = MeshesJS || {};
             //object.material.color.setHex(this.settings.colors.current);
             object.userData.box.visible = true;
             object.userData.transform = true;
+            object.userData.selected = true;
             this.transform.attach(object);
         }
         else {
@@ -373,6 +332,7 @@ var MeshesJS = MeshesJS || {};
             //object.material.color.setHex(object.userData.color);
             object.userData.box.visible = false;
             object.userData.transform = false;
+            object.userData.selected = false;
             this.transform.detach();
             var names = Object.keys(this.selectedObjects);
             if (names.length) {
@@ -499,12 +459,34 @@ var MeshesJS = MeshesJS || {};
 
     // -------------------------------------------------------------------------
 
+    Viewer3D.prototype.higlightIntersectedObjects = function() {
+        var results = this.intersectObjects(this.objects);
+        var result, objects, object;
+
+        for (var i = 0; i < results.length; i++) {
+            result = results[i];
+            object = result.object;
+            objects = result.objects;
+            if (! objects.length) {
+                object.userData.box.visible = object.userData.selected;
+                object.userData.box.material.color.setHex(
+                    object.userData.color
+                );
+                continue;
+            }
+            for (var y = 0; y < objects.length; y++) {
+                objects[y].userData.box.visible = true;
+                objects[y].userData.box.material.color.setHex(0xff0000);
+            }
+        }
+    }
+
     Viewer3D.prototype.intersectObject = function(name) {
         var object = name instanceof THREE.Object3D ? name : this.getObject(name);
 
-        var results = [[], []]; // [intersects, others]
+        var results = [];
 
-        var targetObject, index;
+        var targetObject;
         var targetBox = new THREE.Box3();
         var sourceBox = new THREE.Box3();
 
@@ -517,9 +499,25 @@ var MeshesJS = MeshesJS || {};
 
             targetObject = this.objects[name];
             targetBox = targetBox.setFromObject(targetObject);
-            index = targetBox.isIntersectionBox(sourceBox) ? 0 : 1;
 
-            results[index].push(targetObject);
+            if (targetBox.isIntersectionBox(sourceBox)) {
+                results.push(targetObject);
+            }
+        }
+
+        return results;
+    };
+
+    Viewer3D.prototype.intersectObjects = function(objects) {
+        var results = [];
+        var object;
+
+        for (var name in objects) {
+            object = objects[name];
+            results.push({
+                object: object,
+                objects: this.intersectObject(object)
+            });
         }
 
         return results;

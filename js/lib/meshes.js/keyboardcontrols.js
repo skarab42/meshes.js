@@ -134,6 +134,8 @@ var MeshesJS = MeshesJS || {};
                 // nothing to do, no render
                 default: render = false;
             }
+            
+            viewer.higlightIntersectedObjects();
 
             render && viewer.render();
         });
