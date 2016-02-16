@@ -109,7 +109,61 @@ var MeshesJS = MeshesJS || {};
         self.transform.setMode('scale'); // dirty bug fix for axis alignement
         self.transform.setMode('translate');
 
+        var lastTransformation;
+
+        function backupLastTransformation() {
+            lastTransformation = {
+                position: self.currentObject.position.clone(),
+                rotation: self.currentObject.rotation.clone(),
+                scale: self.currentObject.scale.clone()
+            };
+        }
+
+        self.transform.addEventListener('mouseDown', function() {
+            backupLastTransformation();
+        });
+
         self.transform.addEventListener('objectChange', function() {
+
+            var difference = {
+                position: {
+                    x: self.currentObject.position.x - lastTransformation.position.x,
+                    y: self.currentObject.position.y - lastTransformation.position.y,
+                    z: self.currentObject.position.z - lastTransformation.position.z
+                },
+                rotation: {
+                    x: self.currentObject.rotation.x - lastTransformation.rotation.x,
+                    y: self.currentObject.rotation.y - lastTransformation.rotation.y,
+                    z: self.currentObject.rotation.z - lastTransformation.rotation.z
+                },
+                scale: {
+                    x: self.currentObject.scale.x - lastTransformation.scale.x,
+                    y: self.currentObject.scale.y - lastTransformation.scale.y,
+                    z: self.currentObject.scale.z - lastTransformation.scale.z
+                }
+            };
+
+            var object;
+
+            for (var name in self.selectedObjects) {
+                if (self.currentObject.name === name) {
+                    continue;
+                }
+                object = self.selectedObjects[name];
+                object.position.x += difference.position.x;
+                object.position.y += difference.position.y;
+                object.position.z += difference.position.z;
+                object.rotation.x += difference.rotation.x;
+                object.rotation.y += difference.rotation.y;
+                object.rotation.z += difference.rotation.z;
+                object.scale.x += difference.scale.x;
+                object.scale.y += difference.scale.y;
+                object.scale.z += difference.scale.z;
+                object.userData.box.update(object);
+            }
+
+            backupLastTransformation();
+
             self.currentObject.userData.box.update(self.currentObject);
             self.higlightIntersectedObjects();
             self.render();
