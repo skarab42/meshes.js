@@ -21,6 +21,7 @@ var MeshesJS = MeshesJS || {};
             exportBinarySTL: 'n',
             exportAsciiSTL: 'm',
             dropSelectedObjects: 'f',
+            packAllObjects: 'p',
             setView: {
                 default: '0',
                 front: '2',
@@ -125,6 +126,10 @@ var MeshesJS = MeshesJS || {};
 
                 case actions.dropSelectedObjects:
                     viewer.dropSelectedObjects();
+                    break;
+
+                case actions.packAllObjects:
+                    viewer.packAllObjects();
                     break;
 
                 // views
