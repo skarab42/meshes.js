@@ -20,6 +20,7 @@ var MeshesJS = MeshesJS || {};
             applyTransformation: 'x',
             exportBinarySTL: 'n',
             exportAsciiSTL: 'm',
+            dropSelectedObjects: 'f',
             setView: {
                 default: '0',
                 front: '2',
@@ -122,6 +123,10 @@ var MeshesJS = MeshesJS || {};
                     viewer.exportSelectedObjects({ outputType: 'ascii' });
                     break;
 
+                case actions.dropSelectedObjects:
+                    viewer.dropSelectedObjects();
+                    break;
+
                 // views
                 case actions.setView.default: viewer.setView(); break;
                 case actions.setView.front: viewer.setView('front'); break;
@@ -134,7 +139,7 @@ var MeshesJS = MeshesJS || {};
                 // nothing to do, no render
                 default: render = false;
             }
-            
+
             viewer.higlightIntersectedObjects();
 
             render && viewer.render();

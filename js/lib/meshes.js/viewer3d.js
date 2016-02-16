@@ -462,6 +462,23 @@ var MeshesJS = MeshesJS || {};
 
     // -------------------------------------------------------------------------
 
+    Viewer3D.prototype.dropObject = function(name) {
+        var object = name instanceof THREE.Object3D ? name : this.getObject(name);
+        var offset =  object.userData.box.geometry.attributes.position.array[23];
+        //console.log(object.position.z, offset);
+        object.position.z -= offset;
+        object.userData.box.update(object);
+        this.transform.update();
+    };
+
+    Viewer3D.prototype.dropSelectedObjects = function() {
+        for (var name in this.selectedObjects) {
+            this.dropObject(this.selectedObjects[name]);
+        }
+    };
+
+    // -------------------------------------------------------------------------
+
     Viewer3D.prototype.higlightIntersectedObjects = function() {
         var results = this.intersectObjects(this.objects);
         var result, objects, object;
