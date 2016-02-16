@@ -454,6 +454,10 @@ var MeshesJS = MeshesJS || {};
             object.geometry.computeBoundingBox();
         }
 
+        if (! object.geometry.vertices.length) {
+            throw 'Object "' + name + '" as no vertices to show.';
+        }
+
         // normalize geometry position
         this.fixObjectOrigin(object);
 
