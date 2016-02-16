@@ -106,6 +106,9 @@ var MeshesJS = MeshesJS || {};
         self.transform.setTranslationSnap(self.settings.grid.smallCell.size);
         self.transform.setRotationSnap(THREE.Math.degToRad(10));
 
+        self.transform.setMode('scale'); // dirty bug fix for axis alignement
+        self.transform.setMode('translate');
+
         self.transform.addEventListener('objectChange', function() {
             self.currentObject.userData.box.update(self.currentObject);
             self.higlightIntersectedObjects();
