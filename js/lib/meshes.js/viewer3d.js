@@ -528,16 +528,22 @@ var MeshesJS = MeshesJS || {};
         return results;
     };
 
-    Viewer3D.prototype.intersectObjects = function(objects) {
+    Viewer3D.prototype.intersectObjects = function(objects, flatten) {
         var results = [];
-        var object;
+        var object, result;
 
         for (var name in objects) {
             object = objects[name];
-            results.push({
-                object: object,
-                objects: this.intersectObject(object)
-            });
+            result = this.intersectObject(object);
+            if (flatten) {
+                if (result.length) {
+                    results.push(object);
+                    results.concat(result);
+                }
+            }
+            else {
+                results.push({ object: object, objects: result });
+            }
         }
 
         return results;
@@ -630,6 +636,10 @@ var MeshesJS = MeshesJS || {};
 
         if (names.length < 2) {
             return null;
+        }
+        console.log(this.intersectObjects(this.selectedObjects, true));
+        if (this.intersectObjects(this.selectedObjects, true).length) {
+            throw 'Do not group colliding objects, instead use union.';
         }
 
         var geometry = new THREE.Geometry();
