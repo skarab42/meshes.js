@@ -637,7 +637,7 @@ var MeshesJS = MeshesJS || {};
         if (names.length < 2) {
             return null;
         }
-        console.log(this.intersectObjects(this.selectedObjects, true));
+
         if (this.intersectObjects(this.selectedObjects, true).length) {
             throw 'Do not group colliding objects, instead use union.';
         }
