@@ -537,6 +537,49 @@ var MeshesJS = MeshesJS || {};
 
     // -------------------------------------------------------------------------
 
+    Viewer3D.prototype.BSP = function(operation, objects) {
+        var names = Object.keys(objects);
+
+        if (names.length < 2) {
+            return false;
+        }
+
+        var name, object, objectBSP;
+        var source = objects[names.shift()];
+        var sourceBSP = new ThreeBSP(source);
+
+        for (var i = 0; i < names.length; i++) {
+            name = names[i];
+            object = objects[name];
+            objectBSP = new ThreeBSP(object);
+            sourceBSP = sourceBSP[operation](objectBSP);
+            this.removeObject(name);
+        }
+
+        var result = sourceBSP.toMesh(this.getMaterial());
+        result.geometry.computeBoundingSphere();
+        result.geometry.computeBoundingBox();
+        this.transformObject(result);
+        this.addObject(source.name, result, {
+            position: result.position.clone()
+        });
+        this.removeObject(source.name);
+    };
+
+    Viewer3D.prototype.unionSelectedObjects = function() {
+        this.BSP('union', this.selectedObjects);
+    };
+
+    Viewer3D.prototype.subtractSelectedObjects = function() {
+        this.BSP('subtract', this.selectedObjects);
+    };
+
+    Viewer3D.prototype.intersectSelectedObjects = function() {
+        this.BSP('intersect', this.selectedObjects);
+    };
+
+    // -------------------------------------------------------------------------
+
     var sort = {
         w: function(a, b) { return b.w - a.w; },
         h: function(a, b) { return b.h - a.h; },

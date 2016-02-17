@@ -22,6 +22,9 @@ var MeshesJS = MeshesJS || {};
             exportAsciiSTL: 'm',
             dropSelectedObjects: 'f',
             packAllObjects: 'p',
+            unionSelectedObjects: 'U',
+            subtractSelectedObjects: 'S',
+            intersectSelectedObjects: 'I',
             setView: {
                 default: '0',
                 front: '2',
@@ -126,6 +129,18 @@ var MeshesJS = MeshesJS || {};
 
                 case actions.dropSelectedObjects:
                     viewer.dropSelectedObjects();
+                    break;
+
+                case actions.unionSelectedObjects:
+                    viewer.unionSelectedObjects();
+                    break;
+
+                case actions.subtractSelectedObjects:
+                    viewer.subtractSelectedObjects();
+                    break;
+
+                case actions.intersectSelectedObjects:
+                    viewer.intersectSelectedObjects();
                     break;
 
                 case actions.packAllObjects:
