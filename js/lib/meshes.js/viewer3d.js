@@ -60,7 +60,7 @@ var MeshesJS = MeshesJS || {};
             }
         },
         colors: {
-            selected: 0xff0000,
+            selected: 0xDAA520,
             current: 0x00ff00
         },
         keyboard: {
@@ -376,7 +376,8 @@ var MeshesJS = MeshesJS || {};
             }
             this.currentObject = object;
             this.selectedObjects[object.name] = object;
-            //object.material.color.setHex(this.settings.colors.current);
+            object.material.color.setHex(this.settings.colors.selected);
+            object.material.emissive = new THREE.Color(0.1, 0, 0);
             object.userData.box.visible = true;
             object.userData.transform = true;
             object.userData.selected = true;
@@ -386,7 +387,8 @@ var MeshesJS = MeshesJS || {};
             this.currentObject = null;
             this.selectedObjects[object.name] = null;
             delete this.selectedObjects[object.name];
-            //object.material.color.setHex(object.userData.color);
+            object.material.color.setHex(object.userData.color);
+            object.material.emissive = new THREE.Color(0, 0, 0);
             object.userData.box.visible = false;
             object.userData.transform = false;
             object.userData.selected = false;
@@ -477,7 +479,6 @@ var MeshesJS = MeshesJS || {};
         // bounding box
         var box = new THREE.BoxHelper(object);
         box.material.color.setHex(object.userData.color);
-        box.material.emissive = new THREE.Color(255, 255, 255);
         object.userData.box = box;
         box.visible = false;
         this.scene.add(box);
